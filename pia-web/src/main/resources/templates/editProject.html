@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout.html(title='Edit Project')}">
+<head>
+  <title>Edit project</title>
+</head>
+<body>
+<section layout:fragment="content" class="my-3" th:if="${#strings.contains(#authentication.principal.authorities, 'SECRETARIAT') OR #strings.contains(#authentication.principal.authorities, 'DEPARTMENT-MANAGER') OR #strings.contains(#authentication.principal.authorities, 'PROJECT-MANAGER')}">
+  <div class="row justify-content-sm-center">
+    <div class="col-sm-7 col-md-6 col-lg-5 col-xl-4">
+      <h1 class="h3 mb-4" th:text="'Edit ' + ${project.name}"></h1>
+
+      <form method="post" th:action="@{/project/edit}" th:object="${projectVO}">
+        <div class="mb-3">
+          <label for="projectName" class="form-label">Project name</label>
+          <input type="text" th:field="*{name}" class="form-control" id="projectName" required autofocus>
+          <label for="projectFrom" class="form-label">Project from</label>
+          <input type="date" th:field="*{from}" th:value="${#dates.format(project.from, 'yyyy-MM-dd')}" class="form-control" id="projectFrom" required>
+          <label for="projectTo" class="form-label">Project to</label>
+          <input type="date" th:field="*{to}" th:value="${#dates.format(project.to, 'yyyy-MM-dd')}" class="form-control" id="projectTo" required>
+          <label for="projectDescription" class="form-label">Project description</label>
+          <textarea th:field="*{description}" class="form-control" id="projectDescription" required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Update</button>
+      </form>
+    </div>
+  </div>
+</section>
+</body>
+</html>

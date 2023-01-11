@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout.html(title='Edit Assignment')}">
+<head>
+    <title>Edit Assignment</title>
+</head>
+<body>
+<section layout:fragment="content" class="my-3" th:if="${#strings.contains(#authentication.principal.authorities, 'DEPARTMENT-MANAGER') OR #strings.contains(#authentication.principal.authorities, 'PROJECT-MANAGER')}">
+    <div class="row justify-content-sm-center">
+        <div class="col-sm-7 col-md-6 col-lg-5 col-xl-4">
+            <h1 class="h3 mb-4">Edit Assignment</h1>
+
+            <form method="post" th:action="@{/assignment/edit}" th:object="${assignmentVO}">
+                <div th:switch="${message}">
+                    <div th:case="'Success'" class="alert alert-success">
+                        <strong>Success!</strong> Operation performed successfully.
+                    </div>
+                    <div th:case="'Failed-workload'" class="alert alert-danger">
+                        <strong>Failure!</strong> Users workload would exceed 40 hours (1.0 FTE). Please try again
+                    </div>
+                    <div th:case="'Failed-date'" class="alert alert-danger">
+                        <strong>Failure!</strong> Invalid dates. Target date must be higher than starting date.
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="assignmentFrom" class="form-label">Assignment from</label>
+                    <input type="date" th:field="*{time_from}" th:value="${#dates.format(assignment.from, 'yyyy-MM-dd')}" class="form-control" id="assignmentFrom" required autofocus>
+                    <label for="assignmentTo" class="form-label">Assignment to</label>
+                    <input type="date" th:field="*{time_to}" th:value="${#dates.format(assignment.to, 'yyyy-MM-dd')}" class="form-control" id="assignmentTo" required>
+                    <label for="assignmentScope" class="form-label">Assignment scope</label>
+                    <input type="number" th:field="*{scope}" class="form-control" min="0" max="40" step="1" id="assignmentScope"/>
+                    <label for="assignmentNote" class="form-label">Assignment note</label>
+                    <input type="text" th:field="*{note}" class="form-control" id="assignmentNote" required>
+                    <label for="assignmentStatus" class="form-label">Assignment status</label>
+                    <select th:field="*{status}" class="form-control" id="assignmentStatus">
+                        <option value="Draft" th:if="${assignment.status == 'Draft'}">Draft</option>
+                        <option value="Canceled">Canceled</option>
+                        <option value="Past" th:if="${assignment.status == 'Past'}">Past</option>
+                        <option value="Active">Active</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Update</button>
+            </form>
+        </div>
+    </div>
+</section>
+</body>
+</html>

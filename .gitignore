@@ -1,0 +1,4 @@
+# Project exclude paths
+/pia-core/target/
+/pia-jdbc/target/
+/pia-web/target/

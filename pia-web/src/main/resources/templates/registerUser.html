@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout.html(title='Register user')}">
+<head>
+    <title>Register user</title>
+</head>
+<body>
+<section layout:fragment="content" class="my-3" th:if="${#strings.contains(#authentication.principal.authorities, 'SECRETARIAT')}">
+    <div class="row justify-content-sm-center">
+        <div class="col-sm-7 col-md-6 col-lg-5 col-xl-4">
+            <h1 class="h3 mb-4">Register a new user</h1>
+
+            <form method="post" th:action="@{/user/register}" th:object="${userVO}">
+                <div class="alert alert-danger" th:if="${#fields.hasErrors('*')}">
+                    <p th:each="err : ${#fields.errors('*')}" th:text="${err}"></p>
+                </div>
+                <div th:switch="${message}">
+                    <div th:case="'Success'" class="alert alert-success">
+                        <strong>Success!</strong> Operation performed successfully.
+                    </div>
+                    <div th:case="'Failed'" class="alert alert-danger">
+                        <strong>Failure!</strong> Operation failed. Please try again
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="userFirstName" class="form-label">Firstname</label>
+                    <input type="text" th:field="*{firstname}" class="form-control" id="userFirstName" required autofocus>
+                    <label for="userLastName" class="form-label">Lastname</label>
+                    <input type="text" th:field="*{lastname}" class="form-control" id="userLastName" required>
+                    <label for="userUsername" class="form-label">Username</label>
+                    <input type="text" th:field="*{username}" class="form-control" id="userUsername" required>
+                    <label for="userPassword" class="form-label">Password</label>
+                    <input type="password" th:field="*{password}" class="form-control" id="userPassword" required>
+                    <label for="userRole" class="form-label">Role</label>
+                    <select th:field="*{role}" class="form-control" id="userRole">
+                        <option value="REGULAR-USER">Regular User</option>
+                        <option value="SUPERIOR">Superior</option>
+                        <option value="PROJECT-MANAGER">Project manager</option>
+                        <option value="DEPARTMENT-MANAGER">Department manager</option>
+                        <option value="SECRETARIAT">Secretariat</option>
+                    </select>
+                    <label for="userWorkplace" class="form-label">Workplace</label>
+                    <input type="text" th:field="*{workplace}" class="form-control" id="userWorkplace" required>
+                    <label for="userEmail" class="form-label">Email</label>
+                    <input type="email" th:field="*{email}" class="form-control" id="userEmail" placeholder="name@example.com" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Register</button>
+            </form>
+        </div>
+    </div>
+</section>
+</body>
+</html>

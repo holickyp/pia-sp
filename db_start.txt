@@ -1,0 +1,9 @@
+Run from cmd:
+
+docker run -it --rm --name mysql -p 3306:3306 -e MYSQL_ROOT_PASSWORD=root mysql:8
+
+
+Connect to the container's terminal:
+
+mysql --user=root --password=root
+

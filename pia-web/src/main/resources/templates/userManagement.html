@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout.html(title='User Management')}">
+<head>
+    <title>User Management</title>
+</head>
+<body>
+<section layout:fragment="content" class="my-3">
+    <div class="container col-md-10 col-lg-9 col-xl-8">
+        <div class="row">
+            <div class="row">
+                <div class="col-md-10 col-lg-9 col-xl-8">
+                    <h1 th:if="${#strings.contains(#authentication.principal.authorities, 'REGULAR-USER')}">Account overview</h1>
+                    <h1 th:if="${#strings.contains(#authentication.principal.authorities, 'SUPERIOR')}">All subordinates</h1>
+                    <h1 th:if="${#strings.contains(#authentication.principal.authorities, 'PROJECT-MANAGER')}">All users on my projects</h1>
+                    <h1 th:if="${#strings.contains(#authentication.principal.authorities, 'DEPARTMENT-MANAGER')}">All assigned users</h1>
+                    <h1 th:if="${#strings.contains(#authentication.principal.authorities, 'SECRETARIAT')}">All users</h1>
+                    <div th:if="${#strings.contains(#authentication.principal.authorities, 'SECRETARIAT')}">
+                        <a class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseForm" aria-expanded="false" aria-controls="collapseForm">Assign Subordinate</a>
+                        <div th:switch="${message}">
+                            <div th:case="'Success'" class="alert alert-success">
+                                <strong>Success!</strong> Operation performed successfully.
+                            </div>
+                            <div th:case="'Failed'" class="alert alert-danger">
+                                <strong>Failure!</strong> Operation failed. Please try again
+                            </div>
+                        </div>
+                        <div class="collapse" id="collapseForm">
+                            <div class="card card-body mt-2">
+                                <form method="post" th:action="@{/user/management/assign}" th:object="${userVO}">
+                                    <div class="alert alert-danger" th:if="${#fields.hasErrors('*')}">
+                                        <p th:each="err : ${#fields.errors('*')}" th:text="${err}"></p>
+                                    </div>
+                                    <div class="form-row row align-items-center">
+                                        <div class="col">
+                                            <label for="superiorUsername" class="form-label text-nowrap">Superior Username</label>
+                                        </div>
+                                        <div class="col">
+                                            <input type="text" th:field="*{username}" class="form-control" id="superiorUsername" required autofocus>
+                                        </div>
+                                        <div class="col">
+                                            <label for="subordinateUsername" class="form-label text-nowrap">Subordinate Username</label>
+                                        </div>
+                                        <div class="col">
+                                            <input type="text" th:field="*{lastname}" class="form-control" id="subordinateUsername" required>
+                                        </div>
+                                        <div class="col">
+                                            <button type="submit" class="btn btn-primary text-nowrap">Add Subordinate</button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <div class="table-wrapper">
+                <div class="table-title">
+                </div>
+                <table class="table table-hover bg-transparent">
+                    <thead>
+                    <tr>
+                        <th>Firstname</th>
+                        <th>Lastname</th>
+                        <th>Username</th>
+                        <th>Role</th>
+                        <th>Workplace</th>
+                        <th>Email</th>
+                        <th th:if="${#strings.contains(#authentication.principal.authorities, 'SECRETARIAT')}">Action</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <th:block th:each="users : ${users}">
+                        <tr class="accordion-toggle collapsed" th:attr="data-bs-target='#accordionRow_'+${users.username}" data-bs-toggle="collapse" aria-controls="collapseRow" aria-expanded="false">
+                            <td th:text="${users.firstname}"></td>
+                            <td th:text="${users.lastname}"></td>
+                            <td th:text="${users.username}"></td>
+                            <td th:text="${users.role}"></td>
+                            <td th:text="${users.workplace}"></td>
+                            <td th:text="${users.email}"></td>
+                            <td th:if="${#strings.contains(#authentication.principal.authorities, 'SECRETARIAT')}">
+                                <a class="btn btn-success btn-sm" th:href="@{/user/edit-{username}(username=${users.username})}" data-toggle="tooltip" data-placement="top" title="Edit"><i><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
+                                    <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
+                                    <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z"/></svg></i>
+                                </a>
+                            </td>
+                        </tr>
+                        <div th:if="${#strings.contains(#authentication.principal.authorities, 'PROJECT-MANAGER') OR #strings.contains(#authentication.principal.authorities, 'DEPARTMENT-MANAGER')}" class="collapse" th:id="'accordionRow_'+${users.username}">
+                            <tr class="collapse no-border bg-light" th:id="'accordionRow_'+${users.username}" th:if="${not #lists.isEmpty(users.projects)}">
+                                <th></th>
+                                <th>Active workload</th>
+                                <th>Overall workload</th>
+                                <th></th>
+                                <th></th>
+                                <th></th>
+                                <th></th>
+                            </tr>
+                            <tr class="collapse no-border bg-light" th:id="'accordionRow_'+${users.username}" th:if="${not #lists.isEmpty(users.projects)}">
+                                <td></td>
+                                <td data-toggle="tooltip" data-placement="top" th:title="${activeAssignmentWorkload__${users.username}__ /40 + ' FTE'}" th:text="${activeAssignmentWorkload__${users.username}__ + ' h/week'}"></td>
+                                <td data-toggle="tooltip" data-placement="top" th:title="${overallAssignmentWorkload__${users.username}__ /40 + ' FTE'}" th:text="${overallAssignmentWorkload__${users.username}__ + ' h/week'}"></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                            <tr class="collapse no-border bg-light" th:id="'accordionRow_'+${users.username}" th:if="${#lists.isEmpty(users.projects)}">
+                                <td></td>
+                                <td data-toggle="tooltip" data-placement="top" th:title="${0/40 + ' FTE'}">0 h/week</td>
+                                <td data-toggle="tooltip" data-placement="top" th:title="${0/40 + ' FTE'}">0 h/week</td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                        </div>
+                        <div th:if="not ${#strings.contains(#authentication.principal.authorities, 'PROJECT-MANAGER') OR #strings.contains(#authentication.principal.authorities, 'DEPARTMENT-MANAGER')}" class="collapse" th:id="'accordionRow_'+${users.username}">
+                            <tr class="collapse no-border bg-light" th:id="'accordionRow_'+${users.username}" th:if="${not #lists.isEmpty(users.projects)}">
+                                <th></th>
+                                <th>Project name</th>
+                                <th>Assigned time</th>
+                                <th>Assignment scope</th>
+                                <th>Assignment note</th>
+                                <th>Assignment status</th>
+                                <th></th>
+                            </tr>
+                            <tr class="collapse no-border bg-light" th:id="'accordionRow_'+${users.username}" th:if="${not #lists.isEmpty(users.projects)}" th:each="project : ${users.projects}">
+                                <td></td>
+                                <td th:text="${project.name}"></td>
+                                <td th:each="assignment : ${assignment__${users.username}__}" th:if="${assignment.job_id == project.id and #dates.format(assignment.from, 'dd.MM.yyyy') != '27.12.0999'}" th:text="${#dates.format(assignment.from, 'dd.MM.yyyy')} + ' - ' + ${#dates.format(assignment.to, 'dd.MM.yyyy')}"></td>
+                                <td th:each="assignment : ${assignment__${users.username}__}" th:if="${assignment.job_id == project.id and #dates.format(assignment.from, 'dd.MM.yyyy') == '27.12.0999'}">Not yet assigned</td>
+                                <td data-toggle="tooltip" data-placement="top" th:title="${assignment.scope/40 + ' FTE'}" th:each="assignment : ${assignment__${users.username}__}" th:if="${assignment.job_id == project.id}" th:text="${assignment.scope} + ' h/week'"></td>
+                                <td th:each="assignment : ${assignment__${users.username}__}" th:if="${assignment.job_id == project.id}" th:text="${assignment.note}"></td>
+                                <td th:each="assignment : ${assignment__${users.username}__}" th:if="${assignment.job_id == project.id}" th:text="${assignment.status}"></td>
+                                <td></td>
+                            </tr>
+                            <tr class="collapse no-border bg-light" th:id="'accordionRow_'+${users.username}" th:if="${#lists.isEmpty(users.projects)}">
+                                <td></td>
+                                <td>Not yet assigned to any project</td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                        </div>
+                    </th:block>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</section>
+</body>
+</html>
