@@ -372,10 +372,10 @@ Heslo uživatele admin je \textit{admin}. Pro ostatní uživatele je heslo \text
 	\caption{Ůvodní stránka pro sekretariát}
 	\label{fig:index} 
 \end{figure}
-Položky v menu jako \texttt{Register user} a \texttt{Create project} vidí pouze sekretariát. Sekretariát a Department manager si také mohou zobrazit všechny projekty naopak od Projekt manažera \ref{fig:indexpmanager} či běžného uživatele.
+Položky v menu jako \texttt{Register user} a \texttt{Create project} vidí pouze sekretariát. Sekretariát a Department manager si také mohou zobrazit všechny projekty naopak od Projekt manažera, který si může zobrazit jen svoje projekty \ref{fig:indexpmanager}, či od běžného uživatele.
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=0.9\textwidth]{Images/index\_pmanager.jpg}
+	\includegraphics[width=0.65\textwidth]{Images/index\_pmanager.jpg}
 	\caption{Zobrazení projektů pro Projekt manažera}
 	\label{fig:indexpmanager} 
 \end{figure}
@@ -399,7 +399,7 @@ Stránka obsahující formulář pro registraci uživatele \ref{fig:reg}.
 \newpage
 
 \section{Vytvoření nového projektu}
-Stránka obsahující formulář pro vytvoření nového projektu \ref{fig:createproject}. Formulář opět kontroluje zda projekt již existuje, všechna pole ksou vyplněna a že zadaný rozestup pro datum je validní.
+Stránka obsahující formulář pro vytvoření nového projektu \ref{fig:createproject}. Formulář opět kontroluje zda projekt již existuje, všechna pole jsou vyplněna a že zadaný rozestup pro datum je validní.
  \begin{figure}[H]
 	\centering
 	\includegraphics[width=\textwidth]{Images/create\_project.jpg}
@@ -448,7 +448,7 @@ Ze stránky projektu lze upravit projekt \ref{fig:editProject} nebo přiřazení
 \section{Správa uživatelů}
 Tato stránka se liší nejvíce podle role přihlášeného uživatele. Podle přihlášené role vidí uživatel jiná data v tabulce. Každý záznam v tabulce je interaktivní, kde po kliknutí se objeví nová řada obsahující projekty spojené s tímto uživatelem a jeho přiřazení do těchto projektů.
 \begin{itemize}
-             \item \textbf{Sekretariát:} vidí všechny uživatele a jejich jednolivá přiřazení \ref{fig:userManSec}. Uživatele tady lze může i upravit \ref{fig:userEdit} nebo přidat podřízeného k nadřízenému \ref{fig:userManAddSub}.
+             \item \textbf{Sekretariát:} vidí všechny uživatele a jejich jednotlivá přiřazení \ref{fig:userManSec}. Uživatele tady lze může i upravit \ref{fig:userEdit} nebo přidat podřízeného k nadřízenému \ref{fig:userManAddSub}.
              \item \textbf{Department manager:} vidí všechny přiřazené uživatele a jejich aktivní a celkové vytížení \ref{fig:userManDMan}.
              \item \textbf{Project manager:} vidí uživatele na jejich projektech a jejich aktivní a celkové vytížení \ref{fig:userManPMan}.
              \item \textbf{Superior:} vidí jejich podřízené a jejich jednotlivé přiřazení \ref{fig:userManSup}.
@@ -514,7 +514,7 @@ Na ůvodní stránce také lze projekty filtrovat podle jména \ref{fig:searchPr
 \end{figure}
 
 \section{Zobrazení úvazku v poměru FTE}
-Kdykoli je vidět \texttt{scope} přiřazení uživatele tak pokud ukážeme kurzorem na danou hodnotu, tak se v tooltipu objeví poměr FTE pro danou hodnotu \ref{fig:FTE}.
+Kdykoli je vidět \texttt{scope} přiřazení uživatele, tak pokud ukážeme kurzorem na danou hodnotu, tak se v tooltipu objeví poměr FTE pro danou hodnotu \ref{fig:FTE}.
  \begin{figure}[H]
 	\centering
 	\includegraphics{Images/scope\_to\_FTE.jpg}
@@ -536,7 +536,7 @@ Poté musíme samotnou aplikaci zkompilovat pomocí Mavenu v rootu aplikace př�
 \\\\
 \texttt{mvn clean package}
 \\\\
-Samotnou aplikaci spustíme přes třídu Webapp z modulu \texttt{pia-web}. Poté jen zbývá otevřít prohlížeč a zadat adresu:
+Samotnou aplikaci spustíme přes třídu \texttt{Webapp} z modulu \texttt{pia-web}. Poté jen zbývá otevřít prohlížeč a zadat adresu:
 \\\\
 \texttt{http://localhost:8080/pia-sp/spring/}
 \\\\
