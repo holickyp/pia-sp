@@ -2,6 +2,7 @@ package cz.zcu.kiv.pia.sp;
 
 import org.springframework.context.i18n.LocaleContext;
 import org.springframework.context.i18n.SimpleLocaleContext;
+import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.i18n.LocaleContextResolver;
 
@@ -11,15 +12,18 @@ import java.util.Locale;
 /**
  * trida pro zmenu jazyka
  */
+@Component
 public class LocaleResolver implements LocaleContextResolver {
 
     @Override
     public LocaleContext resolveLocaleContext(ServerWebExchange exchange) {
-        Locale targetLocale = Locale.getDefault();
-        List<String> referLang = exchange.getRequest().getQueryParams().get("lang");
-        if (referLang != null && !referLang.isEmpty()) {
-            String lang = referLang.get(0);
-            targetLocale = Locale.forLanguageTag(lang);
+        List<String> lang = exchange.getRequest().getQueryParams().get("lang");
+        Locale targetLocale = null;
+        if (lang != null && !lang.isEmpty()) {
+            targetLocale = Locale.forLanguageTag(lang.get(0));
+        }
+        if (targetLocale == null) {
+            targetLocale = Locale.getDefault();
         }
         return new SimpleLocaleContext(targetLocale);
     }

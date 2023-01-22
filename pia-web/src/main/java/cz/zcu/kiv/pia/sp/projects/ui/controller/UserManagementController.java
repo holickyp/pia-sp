@@ -1,9 +1,9 @@
 package cz.zcu.kiv.pia.sp.projects.ui.controller;
 
-import cz.zcu.kiv.pia.sp.projects.domain.Assignment;
-import cz.zcu.kiv.pia.sp.projects.domain.Project;
 import cz.zcu.kiv.pia.sp.projects.domain.Subordinate;
 import cz.zcu.kiv.pia.sp.projects.domain.User;
+import cz.zcu.kiv.pia.sp.projects.enums.Role;
+import cz.zcu.kiv.pia.sp.projects.error.UserNotFoundException;
 import cz.zcu.kiv.pia.sp.projects.service.AssignmentService;
 import cz.zcu.kiv.pia.sp.projects.service.ProjectService;
 import cz.zcu.kiv.pia.sp.projects.service.UserService;
@@ -15,7 +15,6 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.security.Principal;
@@ -37,51 +36,27 @@ public class UserManagementController extends AbstractController {
     /**
      * stranka pro spravu uzivatelu
      * jineho hodnoty podle role prohlaseneho uzivatele
-     * @param principal
-     * @param model
-     * @return
+     * @param principal principal
+     * @param model model
+     * @return template name
      */
     @GetMapping("/user/management")
     public String userManagement(@AuthenticationPrincipal Principal principal, Model model) {
         User curr_user = userService.findUserByUsername(principal.getName()).block();
 
-        var users = userService.getAllUsers();
-        String curr_user_role = curr_user.getRole();
-        //zobrazi jine uzivatele podle role
-        switch (curr_user_role) {
-            case "REGULAR-USER": users = Flux.just(curr_user); model.addAttribute("users", curr_user);break;
-            case "SUPERIOR": users = userService.findSubordinatesBySuperiorId(curr_user.getId());model.addAttribute("users", users);break;
-            case "PROJECT-MANAGER":users = userService.findUsersByManagerId(curr_user.getId());model.addAttribute("users", users);break;
-            case "DEPARTMENT-MANAGER":users = userService.getOnlyAssignedUsers();model.addAttribute("users", users);break;
-            case "SECRETARIAT":
-            default: model.addAttribute("users", users);break;
-        }
+        var users = userService.getUsersByCurrentUserRole(curr_user);
+        model.addAttribute("users", users);
 
         //get projects of displayed users
         for(User user : users.toIterable()) {
-            var projects = projectService.getProjectByUserId(user.getId());
-            for(Project project : projects.toIterable()) {
-                user.join(project);
-            }
+            projectService.joinUserIntoProjects(user);
             var assignments = assignmentService.findByUserId(user.getId());
             model.addAttribute("assignment"+user.getUsername(), assignments);
 
             //spocteni vytizeni pro managery
-            if(curr_user_role.equals("PROJECT-MANAGER") || curr_user_role.equals("DEPARTMENT-MANAGER")) {
-                double active_workload = 0;
-                double overall_workload = 0;
-                for(Assignment assignment : assignments.toIterable()) {
-                    if(assignment.getStatus().equals("Active")) {
-                        active_workload += assignment.getScope();
-                    } else {
-                        if(!assignment.getStatus().equals("Past")) {
-                            overall_workload += assignment.getScope();
-                        }
-                    }
-                }
-                overall_workload += active_workload;
-                model.addAttribute("activeAssignmentWorkload"+user.getUsername(), active_workload);
-                model.addAttribute("overallAssignmentWorkload"+user.getUsername(), overall_workload);
+            if(curr_user.getRole().equals(Role.PROJECT_MANAGER) || curr_user.getRole().equals(Role.DEPARTMENT_MANAGER)) {
+                model.addAttribute("activeAssignmentWorkload"+user.getUsername(), assignmentService.calculateActiveWorkload(assignments).block());
+                model.addAttribute("overallAssignmentWorkload"+user.getUsername(), assignmentService.calculateOverallWorkload(assignments).block());
             }
         }
         model.addAttribute("userVO", new UserVO("", "","","","","",""));
@@ -99,9 +74,11 @@ public class UserManagementController extends AbstractController {
     @PostMapping("/user/management/assign")
     public Mono<String> assignSubordinate(@ModelAttribute UserVO userVO, BindingResult errors, Model model) {
         //identifikuje uzivatele ke kteremu bude subordinate pridany (jeho username ulozeny v userVO.username)
-        User superior = userService.findUserByUsername(userVO.getUsername()).block();
-        //superior nebyl nalezen
-        if(superior == null) {
+        User superior;
+        try {
+            superior = userService.findUserByUsername(userVO.getUsername()).block();
+        } catch(UserNotFoundException e) {
+            //superior nebyl nalezen
             errors.rejectValue("username", "user.username","Superior not found.");
             model.addAttribute("registrationForm", userVO);
             model.addAttribute("message", "Failed");
@@ -110,9 +87,11 @@ public class UserManagementController extends AbstractController {
         }
 
         //identifikuje uzivatele ktereho chceme priradit jako subordinate (jeho username ulozeny v userVO.lastname)
-        User subordinate = userService.findUserByUsername(userVO.getLastname()).block();
-        //subordinate nebyl nalezen
-        if(subordinate == null) {
+        User subordinate;
+        try {
+            subordinate = userService.findUserByUsername(userVO.getLastname()).block();
+        } catch(UserNotFoundException e) {
+            //subordinate nebyl nalezen
             errors.rejectValue("username", "user.username","Subordinate not found.");
             model.addAttribute("registrationForm", userVO);
             model.addAttribute("message", "Failed");

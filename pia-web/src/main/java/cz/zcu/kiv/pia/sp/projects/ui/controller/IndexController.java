@@ -24,7 +24,7 @@ public final class IndexController extends AbstractController {
 
     // Accept query parameter "q" used for searching projects, submitted from navbar search form (see layout.html)
     @GetMapping
-    public String index(@RequestParam(name = "q", required = false) String query, Model model) {
+    public String index(@RequestParam(name = "q", required = false) String query, @RequestParam(name = "lang", required = false) String language, Model model) {
         model.addAttribute("query", query);
 
         var projects = projectService.searchProjects(query);

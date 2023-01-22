@@ -1,16 +1,15 @@
 package cz.zcu.kiv.pia.sp.projects.service;
 
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import cz.zcu.kiv.pia.sp.projects.domain.Assignment;
-import cz.zcu.kiv.pia.sp.projects.domain.Project;
-import cz.zcu.kiv.pia.sp.projects.domain.User;
+import cz.zcu.kiv.pia.sp.projects.enums.Status;
+import cz.zcu.kiv.pia.sp.projects.error.UserAlreadyAssignedException;
+import cz.zcu.kiv.pia.sp.projects.error.WorkloadExceededException;
 import cz.zcu.kiv.pia.sp.projects.repository.AssignmentRepository;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -32,7 +31,7 @@ public class AssignmentService {
             Instant.now(),
             Instant.now(),
             "default assignment",
-            "Active");
+            Status.ACTIVE);
 
     private final AssignmentRepository assignmentRepository;
 
@@ -65,7 +64,48 @@ public class AssignmentService {
     @Transactional
     @Secured({"ROLE_DEPARTMENT-MANAGER", "ROLE_PROJECT-MANAGER"})
     public Mono<Assignment> updateAssignment(UUID id, double scope, Instant from, Instant to, String note, String status) {
-        return assignmentRepository.updateAssignment(id, scope, from, to, note, status);
+        return assignmentRepository.updateAssignment(id, scope, from, to, note, Status.getStatusByString(status));
+    }
+
+    /**
+     * tests if extra workload would exceed user's allowed workload maximum (40h)
+     * @param userId user id
+     * @param assignmentId assignment id
+     * @param AddWorkload extra workload
+     * @return false -> not exceeded | true -> WorkloadExceededException is exceeded
+     */
+    public Mono<Boolean> isWorkloadExceeded(UUID userId, UUID assignmentId, double AddWorkload) {
+        var assignments = assignmentRepository.findByUserId(userId);
+        //spocte uvazek
+        double workload = 0;
+        for(Assignment assignment : assignments.toIterable()) {
+            if(assignment.getId().equals(assignmentId)) {
+                continue;
+            }
+            workload += assignment.getScope();
+        }
+        workload += AddWorkload;
+        //test zda uvazek neprekroci maximum
+        if(workload > 40) {
+            throw new WorkloadExceededException("workload exceeds 40 hours");
+        }
+        return Mono.just(false);
+    }
+
+    /**
+     * tests if user is already assigned to target project
+     * @param userId user's id
+     * @param projectId target project's id
+     * @return false -> not assigned | true -> UserAlreadyAssignedException already assigned
+     */
+    public Mono<Boolean> isUserAssigned(UUID userId, UUID projectId){
+        var assignments = assignmentRepository.findByUserId(userId);
+        for(Assignment assignment : assignments.toIterable()) {
+            if(assignment.getJob_id().equals(projectId)) {
+                throw new UserAlreadyAssignedException("user already assigned");
+            }
+        }
+        return Mono.just(false);
     }
 
     /**
@@ -112,5 +152,41 @@ public class AssignmentService {
      */
     public Flux<Assignment> getAllAssignments() {
         return assignmentRepository.findAll();
+    }
+
+    /**
+     * calculates active workload from given assignments
+     * @param assignments assignments
+     * @return active workload
+     */
+    public Mono<Double> calculateActiveWorkload(Flux<Assignment> assignments) {
+        double activeWorkload = 0;
+        for(Assignment assignment : assignments.toIterable()) {
+            if(assignment.getStatus().equals(Status.ACTIVE)) {
+                activeWorkload += assignment.getScope();
+            }
+        }
+        return Mono.just(activeWorkload);
+    }
+
+    /**
+     * calculates overall workload from given assignments
+     * @param assignments assignments
+     * @return overall workload
+     */
+    public Mono<Double> calculateOverallWorkload(Flux<Assignment> assignments) {
+        double overallWorkload = 0;
+        double activeWorkload = 0;
+        for(Assignment assignment : assignments.toIterable()) {
+            if(assignment.getStatus().equals(Status.ACTIVE)) {
+                activeWorkload += assignment.getScope();
+            } else {
+                if(!assignment.getStatus().equals(Status.PAST)) {
+                    overallWorkload += assignment.getScope();
+                }
+            }
+        }
+        overallWorkload += activeWorkload;
+        return Mono.just(overallWorkload);
     }
 }

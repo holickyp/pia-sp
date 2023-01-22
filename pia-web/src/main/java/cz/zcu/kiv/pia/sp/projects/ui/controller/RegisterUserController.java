@@ -4,7 +4,6 @@ import cz.zcu.kiv.pia.sp.projects.domain.User;
 import cz.zcu.kiv.pia.sp.projects.error.UserAlreadyExistException;
 import cz.zcu.kiv.pia.sp.projects.service.UserService;
 import cz.zcu.kiv.pia.sp.projects.ui.vo.UserVO;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -37,29 +36,27 @@ public class RegisterUserController extends AbstractController {
 
     /**
      * POST vytvor noveho uzivatele
-     * @param userVO
-     * @param errors
-     * @param model
-     * @return
+     * @param userVO info from form
+     * @param errors errors
+     * @param model model
+     * @return template name
      */
     @PostMapping("/user/register")
     public Mono<String> registerUser(@ModelAttribute UserVO userVO, BindingResult errors, Model model) {
-        Mono<User> curr_user =  userService.getCurrentUser();
-        Mono<User> register = curr_user.flatMap(user -> {
-            try {
-                Mono<User> new_user = userService.registerUser(new User(userVO.getFirstname(), userVO.getLastname(), userVO.getUsername(), new BCryptPasswordEncoder().encode(userVO.getPassword()), userVO.getRole(), userVO.getWorkplace(), userVO.getEmail()));
-                model.addAttribute("message", "Success");
-                model.addAttribute("alertClass", "alert-success");
-                return new_user;
-            } catch (UserAlreadyExistException e) {
-                errors.rejectValue("username", "userData.username","An account already exists for this username.");
-                model.addAttribute("registrationForm", userVO);
-                model.addAttribute("message", "Failed");
-                model.addAttribute("alertClass", "alert-danger");
-                return userService.getCurrentUser();
-            }
-        });
+        try {
+            userService.checkIfUserExist(userVO.getUsername());
+        } catch (UserAlreadyExistException e) {
+            errors.rejectValue("username", "userData.username","An account already exists for this username.");
+            model.addAttribute("registrationForm", userVO);
+            model.addAttribute("message", "Failed");
+            model.addAttribute("alertClass", "alert-danger");
+            return userService.getCurrentUser().map(index -> "registerUser");
+        }
 
+        Mono<User> register = userService.getCurrentUser().flatMap(user -> userService.registerUser(userVO.getFirstname(), userVO.getLastname(), userVO.getUsername(), userVO.getPassword(), userVO.getRole(), userVO.getWorkplace(), userVO.getEmail()));
+
+        model.addAttribute("message", "Success");
+        model.addAttribute("alertClass", "alert-success");
         return register.map(index -> "registerUser");
     }
 }

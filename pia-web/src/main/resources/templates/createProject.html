@@ -4,7 +4,7 @@
   <title>Create project</title>
 </head>
 <body>
-<section layout:fragment="content" class="my-3" th:if="${#strings.contains(#authentication.principal.authorities, 'SECRETARIAT')}">
+<section layout:fragment="content" class="my-3" th:if="${#strings.contains(#authentication.principal.authorities, T(cz.zcu.kiv.pia.sp.projects.enums.Role).SECRETARIAT.role)}">
   <div class="row justify-content-sm-center">
     <div class="col-sm-7 col-md-6 col-lg-5 col-xl-4">
       <h1 class="h3 mb-4">Create a new project</h1>

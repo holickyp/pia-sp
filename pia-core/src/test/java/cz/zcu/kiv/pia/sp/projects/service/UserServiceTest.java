@@ -8,10 +8,12 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
+
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.test.context.TestSecurityContextHolder;
 import org.springframework.security.test.context.support.ReactorContextTestExecutionListener;
 import org.springframework.test.context.TestExecutionListener;
@@ -19,6 +21,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.Mockito.*;
 
 /**
@@ -30,6 +33,8 @@ public class UserServiceTest {
     private UserRepository userRepository;
     @InjectMocks
     private DefaultUserService userService;
+    @InjectMocks
+    PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     private static User user;
 
@@ -40,70 +45,78 @@ public class UserServiceTest {
 
     @Test
     void registerUser() throws UserAlreadyExistException {
-        DefaultUserService underTest = new DefaultUserService(userRepository) {
+        DefaultUserService underTest = new DefaultUserService(userRepository, passwordEncoder) {
             @Override
-            public boolean checkIfUserExist(String username) {
-                return false;
+            public Mono<Boolean> checkIfUserExist(String username) {
+                return Mono.just(false);
             }
         };
+        when(userRepository.registerUser(argThat(arg -> arg.getUsername().equals(user.getUsername())))).thenReturn(Mono.just(user));
 
-        when(userRepository.registerUser(user)).thenReturn(Mono.just(user));
-
-        var result = underTest.registerUser(user).block();
+        var result = underTest.registerUser(user.getFirstname(), user.getLastname(), user.getUsername(),user.getPassword(), user.getRole().toString(), user.getWorkplace(), user.getEmail()).block();
 
         assertEquals(user, result);
 
-        verify(userRepository).registerUser(user);
+        verify(userRepository).registerUser(argThat(arg -> arg.getUsername().equals(user.getUsername())));
         verifyNoMoreInteractions(userRepository);
     }
 
     @Test
     void registerUserAlreadyExists() throws UserAlreadyExistException {
         Assertions.assertThrows(UserAlreadyExistException.class, () -> {
-            DefaultUserService underTest = new DefaultUserService(userRepository) {
+            DefaultUserService underTest = new DefaultUserService(userRepository, passwordEncoder) {
                 @Override
-                public boolean checkIfUserExist(String username) {
-                    return true;
+                public Mono<Boolean> checkIfUserExist(String username) {
+                    return Mono.just(true);
                 }
             };
 
-            underTest.registerUser(user).block();
+            underTest.registerUser(user.getFirstname(), user.getLastname(), user.getUsername(), user.getPassword(), user.getRole().toString(), user.getWorkplace(), user.getEmail()).block();
         });
     }
 
     @Test
     void updateUser() {
-        DefaultUserService underTest = new DefaultUserService(userRepository) {
+        DefaultUserService underTest = new DefaultUserService(userRepository, passwordEncoder) {
             @Override
-            public boolean checkIfUserExist(String username) {
-                return true;
+            public Mono<Boolean> checkIfUserExist(String username) {
+                return Mono.just(true);
             }
         };
 
-        when(userRepository.updateUser(user.getId(), user.getFirstname(), user.getLastname(), user.getUsername(), user.getPassword(), user.getRole(), user.getWorkplace(), user.getEmail())).thenReturn(Mono.just(user));
+        when(userRepository.updateUser(any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(Mono.just(user));
 
-        var result = underTest.updateUser(user.getId(), user.getFirstname(), user.getLastname(), user.getUsername(), user.getPassword(), user.getRole(), user.getWorkplace(), user.getEmail()).block();
+        var result = underTest.updateUser(user.getId(), user.getFirstname(), user.getLastname(), user.getUsername(), user.getPassword(), user.getRole().toString(), user.getWorkplace(), user.getEmail()).block();
 
         assertEquals(user, result);
 
-        verify(userRepository).updateUser(user.getId(), user.getFirstname(), user.getLastname(), user.getUsername(), user.getPassword(), user.getRole(), user.getWorkplace(), user.getEmail());
+        verify(userRepository).updateUser(any(), any(), any(), any(), any(), any(), any(), any());
         verifyNoMoreInteractions(userRepository);
     }
 
     @Test
     void updateUserDoesNotExists() throws UserAlreadyExistException {
-        DefaultUserService underTest = new DefaultUserService(userRepository) {
+        DefaultUserService underTest = new DefaultUserService(userRepository, passwordEncoder) {
             @Override
-            public boolean checkIfUserExist(String username) {
-                return false;
+            public Mono<Boolean> checkIfUserExist(String username) {
+                return Mono.just(false);
             }
         };
 
-        var result = underTest.updateUser(user.getId(), user.getFirstname(), user.getLastname(), user.getUsername(), user.getPassword(), user.getRole(), user.getWorkplace(), user.getEmail());
+        var result = underTest.updateUser(user.getId(), user.getFirstname(), user.getLastname(), user.getUsername(), user.getPassword(), user.getRole().toString(), user.getWorkplace(), user.getEmail());
 
         assertEquals(Mono.empty(), result);
 
         verifyNoMoreInteractions(userRepository);
+    }
+
+    @Test
+    void checkIfUserExist() {
+        Assertions.assertThrows(UserAlreadyExistException.class, () -> {
+            when(userRepository.findByUsername(user.getUsername())).thenReturn(Mono.just(user));
+
+            userService.checkIfUserExist(user.getUsername());
+        });
     }
 
     @Test
@@ -144,6 +157,18 @@ public class UserServiceTest {
         assertEquals(user, result.get(0));
 
         verify(userRepository).getOnlyAssignedUsers();
+        verifyNoMoreInteractions(userRepository);
+    }
+
+    @Test
+    void getUsersByCurrentUserRoleSecretariat() {
+        when(userRepository.findAll()).thenReturn(Flux.just(user));
+
+        var result = userService.getUsersByCurrentUserRole(user).collectList().block();
+
+        assertFalse(result.isEmpty());
+
+        verify(userRepository).findAll();
         verifyNoMoreInteractions(userRepository);
     }
 

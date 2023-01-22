@@ -3,6 +3,7 @@ package cz.zcu.kiv.pia.sp.projects.repository;
 import cz.zcu.kiv.pia.sp.JdbcConfig;
 import cz.zcu.kiv.pia.sp.projects.domain.Project;
 import cz.zcu.kiv.pia.sp.projects.domain.User;
+import cz.zcu.kiv.pia.sp.projects.enums.Role;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -55,7 +56,7 @@ public class JdbcProjectRepositoryIT {
     @Test
     void createProject() {
         //stejny user jako testujici user ve sql skriptu
-        User project_manager = new User(UUID.fromString("567219c1-525a-44b1-93d3-383008a5a029"), "John", "Doe", "testuser", new BCryptPasswordEncoder().encode("password"), "SECRETARIAT", "fav", "johndoe@zcu.cz");
+        User project_manager = new User(UUID.fromString("567219c1-525a-44b1-93d3-383008a5a029"), "John", "Doe", "testuser", new BCryptPasswordEncoder().encode("password"), Role.SECRETARIAT, "fav", "johndoe@zcu.cz");
         Project project = new Project("test", project_manager, Instant.parse("2023-01-05T23:00:00Z"), Instant.parse("2023-01-05T23:00:00Z"), "test");
 
 
@@ -127,14 +128,14 @@ public class JdbcProjectRepositoryIT {
     @Test
     void joinProject() {
         //stejny jako v sql skriptu
-        User project_manager = new User(UUID.fromString("567219c1-525a-44b1-93d3-383008a5a029"), "John", "Doe", "testuser", new BCryptPasswordEncoder().encode("password"), "SECRETARIAT", "fav", "johndoe@zcu.cz");
+        User project_manager = new User(UUID.fromString("567219c1-525a-44b1-93d3-383008a5a029"), "John", "Doe", "testuser", new BCryptPasswordEncoder().encode("password"), Role.SECRETARIAT, "fav", "johndoe@zcu.cz");
         Project project = new Project(UUID.fromString("75ae2ef7-8cf5-48d3-b03f-d137a5d43b1f"), "Test project", project_manager, Instant.parse("2022-01-01T00:00:00Z"), Instant.parse("2023-01-01T00:00:00Z"), "Test project description");
 
         //Assignment assignment = new Assignment(UUID.fromString("567219c1-525a-44b1-93d3-383008a5a029"), UUID.fromString("75ae2ef7-8cf5-48d3-b03f-d137a5d43b1f"), 20, Instant.parse("2023-01-05T23:00:00Z"), Instant.parse("2023-01-05T23:00:00Z"), "test", "Past");
 
         //spravne by melo spadnot jelikoz assigment mezi timto user a project uz existuje (vytvoren v sql skriptu)
         //testovat vytvoreni prirazeni nelze bud kvuli:
-        // 1) uniqui key constraints
+        // 1) unique key constraints
         // 2) nelze ziskat nove vytvoreny assignment pro porovnani
         Assertions.assertThrows(org.springframework.dao.DuplicateKeyException.class, () -> {
             projectRepository.joinProject(project.getId(), project_manager);

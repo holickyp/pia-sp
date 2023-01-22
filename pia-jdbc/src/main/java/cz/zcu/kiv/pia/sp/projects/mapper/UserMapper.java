@@ -1,6 +1,7 @@
 package cz.zcu.kiv.pia.sp.projects.mapper;
 
 import cz.zcu.kiv.pia.sp.projects.domain.User;
+import cz.zcu.kiv.pia.sp.projects.enums.Role;
 import org.springframework.jdbc.core.RowMapper;
 
 import java.sql.ResultSet;
@@ -21,6 +22,6 @@ public class UserMapper implements RowMapper<User> {
         String role = rs.getObject("role", String.class);
         String workplace = rs.getObject("workplace", String.class);
         String email = rs.getObject("email", String.class);
-        return new User(UUID.fromString(id), firstName, lastName, username, password, role, workplace, email);
+        return new User(UUID.fromString(id), firstName, lastName, username, password, Role.getRoleByString(role), workplace, email);
     }
 }

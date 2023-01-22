@@ -1,6 +1,7 @@
 package cz.zcu.kiv.pia.sp.projects.repository;
 
 import cz.zcu.kiv.pia.sp.projects.domain.Assignment;
+import cz.zcu.kiv.pia.sp.projects.enums.Status;
 import cz.zcu.kiv.pia.sp.projects.mapper.AssignmentMapper;
 import org.springframework.context.annotation.Primary;
 import org.springframework.dao.DataAccessException;
@@ -48,7 +49,7 @@ public class JdbcAssignmentRepository implements AssignmentRepository {
         params.addValue("time_from", assignment.getFrom());
         params.addValue("time_to", assignment.getTo());
         params.addValue("note", assignment.getNote());
-        params.addValue("status", assignment.getStatus());
+        params.addValue("status", assignment.getStatus().toString());
 
         var rowsUpdated = jdbcTemplate.update(sql, params);
 
@@ -66,7 +67,7 @@ public class JdbcAssignmentRepository implements AssignmentRepository {
      * @return aktualizovany Assignment
      */
     @Override
-    public Mono<Assignment> updateAssignment(UUID id, double scope, Instant from, Instant to, String note, String status) {
+    public Mono<Assignment> updateAssignment(UUID id, double scope, Instant from, Instant to, String note, Status status) {
         var sql = """
         UPDATE assignment
         SET scope = :scope, time_from = :time_from, time_to = :time_to , note = :note, status = :status
@@ -78,7 +79,7 @@ public class JdbcAssignmentRepository implements AssignmentRepository {
         params.addValue("time_from", from);
         params.addValue("time_to", to);
         params.addValue("note", note);
-        params.addValue("status", status);
+        params.addValue("status", status.toString());
         params.addValue("id", id.toString());
 
         var rowsUpdated = jdbcTemplate.update(sql, params);
@@ -98,7 +99,7 @@ public class JdbcAssignmentRepository implements AssignmentRepository {
         for(Assignment assignment : assignments.toIterable()) {
             LocalDate time_to = assignment.getTo().atZone(ZoneId.systemDefault()).toLocalDate();
             if(localDate.isAfter(time_to)) {
-                updateAssignment(assignment.getId(), assignment.getScope(), assignment.getFrom(), assignment.getTo(), assignment.getNote(), "Past");
+                updateAssignment(assignment.getId(), assignment.getScope(), assignment.getFrom(), assignment.getTo(), assignment.getNote(), Status.PAST);
             }
         }
         return Mono.empty();

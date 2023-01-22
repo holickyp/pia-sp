@@ -3,6 +3,7 @@ package cz.zcu.kiv.pia.sp.projects.repository;
 import cz.zcu.kiv.pia.sp.projects.domain.Project;
 import cz.zcu.kiv.pia.sp.projects.domain.Subordinate;
 import cz.zcu.kiv.pia.sp.projects.domain.User;
+import cz.zcu.kiv.pia.sp.projects.enums.Role;
 import org.springframework.security.core.userdetails.UserDetails;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -34,7 +35,7 @@ public interface UserRepository {
      * @param email email
      * @return aktualizovany uzivatel
      */
-    Mono<User> updateUser(UUID id, String firstName, String lastName, String username, String password, String role, String workplace, String email);
+    Mono<User> updateUser(UUID id, String firstName, String lastName, String username, String password, Role role, String workplace, String email);
 
     /**
      * najde uzivatele podle id

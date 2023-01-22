@@ -1,10 +1,8 @@
 package cz.zcu.kiv.pia.sp.projects.ui.controller;
 
 import cz.zcu.kiv.pia.sp.projects.domain.User;
-import cz.zcu.kiv.pia.sp.projects.error.UserAlreadyExistException;
 import cz.zcu.kiv.pia.sp.projects.service.UserService;
 import cz.zcu.kiv.pia.sp.projects.ui.vo.UserVO;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -33,7 +31,7 @@ public class EditUserController extends AbstractController {
     public String editUser(@PathVariable String username, Model model) {
         User user = userService.findUserByUsername(username).block();
 
-        model.addAttribute("userVO", new UserVO(user.getFirstname(), user.getLastname(),user.getUsername(),user.getPassword(),user.getRole(),user.getWorkplace(),user.getEmail()));
+        model.addAttribute("userVO", new UserVO(user.getFirstname(), user.getLastname(),user.getUsername(),user.getPassword(),user.getRole().toString(),user.getWorkplace(),user.getEmail()));
 
         return "editUser";
     }
@@ -49,7 +47,7 @@ public class EditUserController extends AbstractController {
     public Mono<String> editUser(@ModelAttribute UserVO userVO, BindingResult errors, Model model) {
         User updated_user = userService.findUserByUsername(userVO.getUsername()).block();
         return userService.getCurrentUser()
-                .flatMap(user -> userService.updateUser(updated_user.getId(), userVO.getFirstname(), userVO.getLastname(), userVO.getUsername(), new BCryptPasswordEncoder().encode(userVO.getPassword()), userVO.getRole(), userVO.getWorkplace(), userVO.getEmail()))
+                .flatMap(user -> userService.updateUser(updated_user.getId(), userVO.getFirstname(), userVO.getLastname(), userVO.getUsername(), userVO.getPassword(), userVO.getRole(), userVO.getWorkplace(), userVO.getEmail()))
                 .map(project -> "redirect:/user/management/"); // Redirect to project view
     }
 }

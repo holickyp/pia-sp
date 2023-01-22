@@ -3,6 +3,7 @@ package cz.zcu.kiv.pia.sp.projects.service;
 import cz.zcu.kiv.pia.sp.projects.domain.Project;
 import cz.zcu.kiv.pia.sp.projects.domain.Subordinate;
 import cz.zcu.kiv.pia.sp.projects.domain.User;
+import cz.zcu.kiv.pia.sp.projects.enums.Role;
 import cz.zcu.kiv.pia.sp.projects.error.UserAlreadyExistException;
 import org.springframework.security.core.userdetails.ReactiveUserDetailsService;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -16,19 +17,25 @@ import java.util.UUID;
  */
 public interface UserService extends ReactiveUserDetailsService {
     /** vychozi uzivatel */
-    User DEFAULT_USER = new User("John", "Doe", "Bruh", "password", "SECRETARIAT", "fav", "johndoe@zcu.cz");
+    User DEFAULT_USER = new User("John", "Doe", "Bruh", "password", Role.SECRETARIAT, "fav", "johndoe@zcu.cz");
     /** druhy vychozi uzivatel */
-    User SECOND_USER = new User("Jane", "Doe", "Bruhmoment", "password", "DEPARTMENT-MANAGER", "fav", "janedoe@zcu.cz");
+    User SECOND_USER = new User("Jane", "Doe", "Bruhmoment", "password", Role.DEPARTMENT_MANAGER, "fav", "janedoe@zcu.cz");
     /** vytvoreni hierarchie mezi vychozimi uzivateli */
     Subordinate DEFAULT_SUBORDINATE = new Subordinate(DEFAULT_USER.getId(), SECOND_USER.getId());
 
     /**
      * Registers user
-     *
-     * @param user User to register
-     * @return Registered user
+     * @param firstName firstName
+     * @param lastName lastName
+     * @param username username
+     * @param password password
+     * @param role role
+     * @param workplace workplace
+     * @param email email
+     * @return registered user
+     * @throws UserAlreadyExistException UserAlreadyExistException
      */
-    Mono<User> registerUser(User user) throws UserAlreadyExistException;
+    Mono<User> registerUser(String firstName, String lastName, String username, String password, String role, String workplace, String email) throws UserAlreadyExistException;
 
     /**
      * aktualizuje uzivatele na zadane hodnoty
@@ -45,6 +52,13 @@ public interface UserService extends ReactiveUserDetailsService {
     Mono<User> updateUser(UUID id, String firstName, String lastName, String username, String password, String role, String workplace, String email)  throws UserAlreadyExistException;
 
     /**
+     * zkontroluje jestlize dany uzivatel jich existuje
+     * @param username uzivatelsko jmeno
+     * @return true - UserAlreadyExistsException | false - doesn't exist
+     */
+    Mono<Boolean> checkIfUserExist(String username);
+
+    /**
      * @return Currently authenticated user
      */
     Mono<User> getCurrentUser();
@@ -59,6 +73,13 @@ public interface UserService extends ReactiveUserDetailsService {
      * @return only assigned users
      */
     Flux<User> getOnlyAssignedUsers();
+
+    /**
+     * vrati uzivatele podle role prave prihlaseneho uzivatele
+     * @param user prave prihlaseny uzivatel
+     * @return users
+     */
+    Flux<User> getUsersByCurrentUserRole(User user);
 
     /**
      * najde uzivatele podle id

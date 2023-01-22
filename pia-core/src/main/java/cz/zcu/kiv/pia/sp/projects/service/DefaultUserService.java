@@ -3,10 +3,12 @@ package cz.zcu.kiv.pia.sp.projects.service;
 import cz.zcu.kiv.pia.sp.projects.domain.Project;
 import cz.zcu.kiv.pia.sp.projects.domain.Subordinate;
 import cz.zcu.kiv.pia.sp.projects.domain.User;
+import cz.zcu.kiv.pia.sp.projects.enums.Role;
 import cz.zcu.kiv.pia.sp.projects.error.UserAlreadyExistException;
+import cz.zcu.kiv.pia.sp.projects.error.UserNotFoundException;
 import cz.zcu.kiv.pia.sp.projects.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.annotation.Secured;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -24,25 +26,34 @@ import java.util.UUID;
 public class DefaultUserService implements UserService {
     private final UserRepository userRepository;
 
-    public DefaultUserService(UserRepository userRepository) {
+    private final PasswordEncoder passwordEncoder;
+
+    public DefaultUserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     /**
      * Registers user
-     *
-     * @param user User to register
-     * @return Registered user
+     * @param firstname firstname
+     * @param lastname lastname
+     * @param username username
+     * @param password password
+     * @param role role
+     * @param workplace workplace
+     * @param email email
+     * @return registered user
+     * @throws UserAlreadyExistException User already exists
      */
     @Override
     @Transactional
     @Secured("ROLE_SECRETARIAT")
-    public Mono<User> registerUser(User user)  throws UserAlreadyExistException {
-        if(checkIfUserExist(user.getUsername())){
+    public Mono<User> registerUser(String firstname, String lastname, String username, String password, String role, String workplace, String email)  throws UserAlreadyExistException {
+        if(Boolean.TRUE.equals(checkIfUserExist(username).block())){
             throw new UserAlreadyExistException("User already exists");
         }
 
-        return userRepository.registerUser(user);
+        return userRepository.registerUser(new User(firstname, lastname, username, passwordEncoder.encode(password), Role.getRoleByString(role), workplace, email));
     }
 
     /**
@@ -61,8 +72,8 @@ public class DefaultUserService implements UserService {
     @Transactional
     @Secured("ROLE_SECRETARIAT")
     public Mono<User> updateUser(UUID id, String firstName, String lastName, String username, String password, String role, String workplace, String email)  throws UserAlreadyExistException {
-        if(checkIfUserExist(username)){
-            return userRepository.updateUser(id, firstName, lastName, username, password, role, workplace, email);
+        if(Boolean.TRUE.equals(checkIfUserExist(username).block())){
+            return userRepository.updateUser(id, firstName, lastName, username, passwordEncoder.encode(password), Role.getRoleByString(role), workplace, email);
         }
 
         return Mono.empty();
@@ -85,7 +96,11 @@ public class DefaultUserService implements UserService {
      */
     @Override
     public Mono<User> findUserByUsername(String username) {
-        return userRepository.findUserByUsername(username);
+        User user = userRepository.findUserByUsername(username).block();
+        if(user == null) {
+            throw new UserNotFoundException("user not found");
+        }
+        return Mono.just(user);
     }
 
     /**
@@ -112,12 +127,15 @@ public class DefaultUserService implements UserService {
     /**
      * zkontroluje jestlize dany uzivatel jich existuje
      * @param username uzivatelsko jmeno
-     * @return true - exists | false - doesn't exist
+     * @return true - UserAlreadyExistException user exists | false - user doesn't exist
      */
-    public boolean checkIfUserExist(String username) {
+    @Override
+    public Mono<Boolean> checkIfUserExist(String username) {
         Mono<UserDetails> userDetailsMono = userRepository.findByUsername(username);
-        return Boolean.TRUE.equals(userDetailsMono.hasElement().block());
-
+        if(Boolean.TRUE.equals(userDetailsMono.hasElement().block())) {
+            throw new UserAlreadyExistException("user already exists");
+        }
+        return Mono.just(false);
     }
 
     /**
@@ -144,6 +162,28 @@ public class DefaultUserService implements UserService {
     @Override
     public Flux<User> getOnlyAssignedUsers() {
         return userRepository.getOnlyAssignedUsers();
+    }
+
+    /**
+     * vrati uzivatele podle role prave prihlaseneho uzivatele
+     * REGULAR_USER -> jen sebe
+     * SUPERIOR -> sve podrizene
+     * PROJECT_MANAGER -> uzivatele pod jeho projekty
+     * DEPARTMENT_MANAGER -> jen prirazene uzivatele
+     * SECRETARIAT -> vsechny uzivatele
+     * @param user prave prihlaseny uzivatel
+     * @return prislusne uzivatele
+     */
+    @Override
+    public Flux<User> getUsersByCurrentUserRole(User user) {
+        switch (user.getRole()) {
+            case REGULAR_USER: return Flux.just(user);
+            case SUPERIOR: return userRepository.findSubordinatesBySuperiorId(user.getId());
+            case PROJECT_MANAGER: return userRepository.findUsersByManagerId(user.getId());
+            case DEPARTMENT_MANAGER: return userRepository.getOnlyAssignedUsers();
+            case SECRETARIAT:
+            default: return userRepository.findAll();
+        }
     }
 
     /**

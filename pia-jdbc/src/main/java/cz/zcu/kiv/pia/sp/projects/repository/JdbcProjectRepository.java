@@ -3,8 +3,9 @@ package cz.zcu.kiv.pia.sp.projects.repository;
 import cz.zcu.kiv.pia.sp.projects.domain.Assignment;
 import cz.zcu.kiv.pia.sp.projects.domain.Project;
 import cz.zcu.kiv.pia.sp.projects.domain.User;
+import cz.zcu.kiv.pia.sp.projects.enums.MinDates;
+import cz.zcu.kiv.pia.sp.projects.enums.Status;
 import cz.zcu.kiv.pia.sp.projects.mapper.ProjectMapper;
-import cz.zcu.kiv.pia.sp.projects.mapper.UserMapper;
 import org.springframework.context.annotation.Primary;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -228,7 +229,7 @@ public class JdbcProjectRepository implements ProjectRepository {
         """;
 
         var params = new MapSqlParameterSource();
-        Assignment assignment = new Assignment(user.getId(), id, 0, FMT.parse("1000-01-01", Instant::from), FMT.parse("1000-01-01", Instant::from), "newly assigned", "Draft");
+        Assignment assignment = new Assignment(user.getId(), id, 0, FMT.parse(MinDates.DEFAULT_DATE.toString(), Instant::from), FMT.parse(MinDates.DEFAULT_DATE.toString(), Instant::from), "newly assigned", Status.DRAFT);
         params.addValue("id", assignment.getId().toString());
         params.addValue("workerId", assignment.getWorker_id().toString());
         params.addValue("jobId", assignment.getJob_id().toString());
@@ -236,7 +237,7 @@ public class JdbcProjectRepository implements ProjectRepository {
         params.addValue("time_from", assignment.getFrom());
         params.addValue("time_to", assignment.getTo());
         params.addValue("note", assignment.getNote());
-        params.addValue("status", assignment.getStatus());
+        params.addValue("status", assignment.getStatus().toString());
 
         var rowsUpdated = jdbcTemplate.update(sql, params);
 

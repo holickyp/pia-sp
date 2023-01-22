@@ -2,12 +2,10 @@ package cz.zcu.kiv.pia.sp.projects.repository;
 
 import cz.zcu.kiv.pia.sp.JdbcConfig;
 import cz.zcu.kiv.pia.sp.projects.domain.Assignment;
-import cz.zcu.kiv.pia.sp.projects.domain.Project;
-import cz.zcu.kiv.pia.sp.projects.domain.User;
+import cz.zcu.kiv.pia.sp.projects.enums.Status;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -19,8 +17,6 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.Instant;
-import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -55,7 +51,7 @@ public class JdbcAssignmentRepositoryIT {
 
     @Test
     void createAssignment() {
-        Assignment assignment = new Assignment(UUID.fromString("117219c1-525a-44b1-93d3-383008a5a029"), UUID.fromString("22ae2ef7-8cf5-48d3-b03f-d137a5d43b1f"), 20, Instant.parse("2023-01-05T23:00:00Z"), Instant.parse("2023-01-05T23:00:00Z"), "test", "Past");
+        Assignment assignment = new Assignment(UUID.fromString("117219c1-525a-44b1-93d3-383008a5a029"), UUID.fromString("22ae2ef7-8cf5-48d3-b03f-d137a5d43b1f"), 20, Instant.parse("2023-01-05T23:00:00Z"), Instant.parse("2023-01-05T23:00:00Z"), "test", Status.PAST);
 
         assignmentRepository.createAssignment(assignment).block();
         var result = assignmentRepository.findById(assignment.getId()).block();
@@ -67,7 +63,7 @@ public class JdbcAssignmentRepositoryIT {
         assertEquals(assignment.getFrom(), result.getFrom());
         assertEquals(assignment.getTo(), result.getTo());
         assertEquals(assignment.getNote(), result.getNote());
-        assertEquals(assignment.getStatus(), result.getStatus());
+        assertEquals(assignment.getStatus().toString(), result.getStatus().toString());
     }
 
     @Test
@@ -77,7 +73,7 @@ public class JdbcAssignmentRepositoryIT {
         var assignment_from = Instant.parse("2023-01-05T23:00:00Z");
         var assignment_to = Instant.parse("2023-01-05T23:00:00Z");
         var assignment_note = "test update note";
-        var assignment_status= "Canceled";
+        var assignment_status= Status.CANCELED;
         var result = assignmentRepository.updateAssignment(assignment_id, assignment_scope, assignment_from, assignment_to, assignment_note, assignment_status).block();
 
         assertEquals(assignment_id, result.getId());
@@ -94,10 +90,7 @@ public class JdbcAssignmentRepositoryIT {
         var result = assignmentRepository.findAll().collectList().block();
 
         assertFalse(result.isEmpty());
-        //LocalDate localDate = LocalDate.now();
-        //LocalDate time_to = result.get(0).getTo().atZone(ZoneId.systemDefault()).toLocalDate();
-        //System.out.println(localDate.isAfter(time_to));
-        assertEquals("Past", result.get(0).getStatus());
+        assertEquals(Status.PAST, result.get(0).getStatus());
     }
 
     @Test
@@ -119,7 +112,7 @@ public class JdbcAssignmentRepositoryIT {
     @Test
     void findByProjectId() {
         var project_id = UUID.fromString("75ae2ef7-8cf5-48d3-b03f-d137a5d43b1f");
-        var result = assignmentRepository.findByUserId(project_id).collectList().block();
+        var result = assignmentRepository.findByProjectId(project_id).collectList().block();
 
         assertFalse(result.isEmpty());
     }

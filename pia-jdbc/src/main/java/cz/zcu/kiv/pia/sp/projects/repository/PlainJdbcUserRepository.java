@@ -4,6 +4,9 @@ import cz.zcu.kiv.pia.sp.projects.domain.Assignment;
 import cz.zcu.kiv.pia.sp.projects.domain.Project;
 import cz.zcu.kiv.pia.sp.projects.domain.Subordinate;
 import cz.zcu.kiv.pia.sp.projects.domain.User;
+import cz.zcu.kiv.pia.sp.projects.enums.MinDates;
+import cz.zcu.kiv.pia.sp.projects.enums.Role;
+import cz.zcu.kiv.pia.sp.projects.enums.Status;
 import cz.zcu.kiv.pia.sp.projects.mapper.UserMapper;
 import org.springframework.security.core.userdetails.UserDetails;
 import reactor.core.publisher.Flux;
@@ -46,7 +49,7 @@ public class PlainJdbcUserRepository implements UserRepository {
             statement.setString(3, user.getLastname());
             statement.setString(4, user.getUsername());
             statement.setString(5, user.getPassword());
-            statement.setString(6, user.getRole());
+            statement.setString(6, user.getRole().toString());
             statement.setString(7, user.getWorkplace());
             statement.setString(8, user.getEmail());
             var rowsUpdated = statement.executeUpdate();
@@ -59,14 +62,14 @@ public class PlainJdbcUserRepository implements UserRepository {
     }
 
     @Override
-    public Mono<User> updateUser(UUID id, String firstName, String lastName, String username, String password, String role, String workplace, String email) {
+    public Mono<User> updateUser(UUID id, String firstName, String lastName, String username, String password, Role role, String workplace, String email) {
         var sql = "UPDATE user SET firstname = ?, lastname = ? , password = ?, role = ?, workplace = ?, email = ? WHERE username = ?";
 
         try (var statement = dataSource.getConnection().prepareStatement(sql)) {
             statement.setString(1, firstName);
             statement.setString(2, lastName);
             statement.setString(3, password);
-            statement.setString(4, role);
+            statement.setString(4, role.toString());
             statement.setString(5, workplace);
             statement.setString(6, email);
             statement.setString(7, username);
@@ -272,7 +275,7 @@ public class PlainJdbcUserRepository implements UserRepository {
 
         try (var statement = dataSource.getConnection().prepareStatement(sql)) {
             var user = findUserByUsername(username).block();
-            Assignment assignment = new Assignment(user.getId(), project.getId(), 0, FMT.parse("1000-01-01", Instant::from), FMT.parse("1000-01-01", Instant::from), "newly assigned", "Draft");
+            Assignment assignment = new Assignment(user.getId(), project.getId(), 0, FMT.parse(MinDates.DEFAULT_DATE.toString(), Instant::from), FMT.parse(MinDates.DEFAULT_DATE.toString(), Instant::from), "newly assigned", Status.DRAFT);
             statement.setString(1, assignment.getId().toString());
             statement.setString(2, assignment.getWorker_id().toString());
             statement.setString(3, assignment.getJob_id().toString());
@@ -280,7 +283,7 @@ public class PlainJdbcUserRepository implements UserRepository {
             statement.setString(5, assignment.getFrom().toString());
             statement.setString(6, assignment.getTo().toString());
             statement.setString(7, assignment.getNote());
-            statement.setString(8, assignment.getStatus());
+            statement.setString(8, assignment.getStatus().toString());
             var rowsUpdated = statement.executeUpdate();
 
             return rowsUpdated == 1 ? Mono.just(user) : Mono.empty();

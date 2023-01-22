@@ -1,6 +1,7 @@
 package cz.zcu.kiv.pia.sp.projects.mapper;
 
 import cz.zcu.kiv.pia.sp.projects.domain.Assignment;
+import cz.zcu.kiv.pia.sp.projects.enums.Status;
 import org.springframework.jdbc.core.RowMapper;
 
 import java.sql.ResultSet;
@@ -34,6 +35,6 @@ public class AssignmentMapper implements RowMapper<Assignment> {
         String note = rs.getObject("note", String.class);
         String status = rs.getObject("status", String.class);
 
-        return new Assignment(UUID.fromString(id), UUID.fromString(worker_id), UUID.fromString(job_id), Double.parseDouble(scope), FMT.parse(from, Instant::from), FMT.parse(to, Instant::from), note, status);
+        return new Assignment(UUID.fromString(id), UUID.fromString(worker_id), UUID.fromString(job_id), Double.parseDouble(scope), FMT.parse(from, Instant::from), FMT.parse(to, Instant::from), note, Status.getStatusByString(status));
     }
 }

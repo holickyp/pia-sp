@@ -12,31 +12,32 @@
     <header>
         <nav class="navbar navbar-expand-lg bg-light">
             <div class="container-fluid">
-                <a class="navbar-brand" th:href="@{/}" th:text="${title}">Projects</a>
+                <a class="navbar-brand" th:href="@{/}" th:text="${title}"></a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="collapse navbar-collapse" id="navbarSupportedContent">
                     <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                         <li class="nav-item">
-                            <a class="nav-link active" aria-current="page" th:href="@{/}">Home</a>
+                            <a th:text="#{label.home}" class="nav-link active" aria-current="page" th:href="@{/}"></a>
                         </li>
-                        <li class="nav-item" th:if="${#strings.contains(#authentication.principal.authorities, 'SECRETARIAT')}">
-                            <a class="nav-link" th:href="@{/project/create}">Create project</a>
+                        <li class="nav-item" th:if="${#strings.contains(#authentication.principal.authorities, T(cz.zcu.kiv.pia.sp.projects.enums.Role).SECRETARIAT.role)}">
+                            <a th:text="#{label.create_project}" class="nav-link" th:href="@{/project/create}"></a>
                         </li>
-                        <li class="nav-item" th:if="${#strings.contains(#authentication.principal.authorities, 'SECRETARIAT')}">
-                            <a class="nav-link" th:href="@{/user/register}">Register user</a>
+                        <li class="nav-item" th:if="${#strings.contains(#authentication.principal.authorities, T(cz.zcu.kiv.pia.sp.projects.enums.Role).SECRETARIAT.role)}">
+                            <a th:text="#{label.register_user}" class="nav-link" th:href="@{/user/register}"></a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" th:href="@{/user/management}">User management</a>
+                            <a th:text="#{label.user_management}" class="nav-link" th:href="@{/user/management}"></a>
                         </li>
                     </ul>
                     <form method="get" th:action="@{/}" class="d-flex" role="search">
-                        <input type="search" name="q" th:value="${query}" placeholder="Search projects by name" class="form-control me-2" aria-label="Search">
-                        <button class="btn btn-outline-success" type="submit">Search</button>
+                        <input type="search" name="q" th:value="${query}" th:placeholder="#{label.search_placeholder}" class="form-control me-2" aria-label="Search">
+                        <button th:text="#{label.search}" class="btn btn-outline-success" type="submit"></button>
                     </form>
+                    <a th:href="@{''(lang=#{lang.url})}" th:text="#{label.change_language}" class="btn btn-outline-info ms-4 me-2"></a>
                     <span class="navbar-text ms-4 me-2" sec:authentication="name"></span>
-                    <a th:href="@{/logout}" class="btn btn-outline-danger">Log out</a>
+                    <a th:href="@{/logout}" th:text="#{label.logout}" class="btn btn-outline-danger"></a>
                 </div>
             </div>
         </nav>

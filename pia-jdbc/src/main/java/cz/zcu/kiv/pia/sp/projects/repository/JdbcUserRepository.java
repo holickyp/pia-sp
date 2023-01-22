@@ -4,6 +4,9 @@ import cz.zcu.kiv.pia.sp.projects.domain.Assignment;
 import cz.zcu.kiv.pia.sp.projects.domain.Project;
 import cz.zcu.kiv.pia.sp.projects.domain.Subordinate;
 import cz.zcu.kiv.pia.sp.projects.domain.User;
+import cz.zcu.kiv.pia.sp.projects.enums.MinDates;
+import cz.zcu.kiv.pia.sp.projects.enums.Role;
+import cz.zcu.kiv.pia.sp.projects.enums.Status;
 import cz.zcu.kiv.pia.sp.projects.mapper.SubordinateMapper;
 import cz.zcu.kiv.pia.sp.projects.mapper.UserMapper;
 import org.springframework.context.annotation.Primary;
@@ -61,7 +64,7 @@ public class JdbcUserRepository implements UserRepository {
         params.addValue("lastname", user.getLastname());
         params.addValue("username", user.getUsername());
         params.addValue("password", user.getPassword());
-        params.addValue("role", user.getRole());
+        params.addValue("role", user.getRole().toString());
         params.addValue("workplace", user.getWorkplace());
         params.addValue("email", user.getEmail());
 
@@ -83,7 +86,7 @@ public class JdbcUserRepository implements UserRepository {
      * @return aktualizovany uzivatel
      */
     @Override
-    public Mono<User> updateUser(UUID id, String firstName, String lastName, String username, String password, String role, String workplace, String email) {
+    public Mono<User> updateUser(UUID id, String firstName, String lastName, String username, String password, Role role, String workplace, String email) {
         var sql = """
         UPDATE user
         SET firstname = :firstname, lastname = :lastname , password = :password, role = :role, workplace = :workplace, email = :email
@@ -94,7 +97,7 @@ public class JdbcUserRepository implements UserRepository {
         params.addValue("firstname", firstName);
         params.addValue("lastname", lastName);
         params.addValue("password", password);
-        params.addValue("role", role);
+        params.addValue("role", role.toString());
         params.addValue("workplace", workplace);
         params.addValue("email", email);
         params.addValue("username", username);
@@ -313,7 +316,7 @@ public class JdbcUserRepository implements UserRepository {
 
         var params = new MapSqlParameterSource();
         var user = findUserByUsername(username).block();
-        Assignment assignment = new Assignment(user.getId(), project.getId(), 0, FMT.parse("1000-01-01", Instant::from), FMT.parse("1000-01-01", Instant::from), "newly assigned", "Draft");
+        Assignment assignment = new Assignment(user.getId(), project.getId(), 0, FMT.parse(MinDates.DEFAULT_DATE.toString(), Instant::from), FMT.parse(MinDates.DEFAULT_DATE.toString(), Instant::from), "newly assigned", Status.DRAFT);
         params.addValue("id", assignment.getId().toString());
         params.addValue("workerId", assignment.getWorker_id().toString());
         params.addValue("jobId", assignment.getJob_id().toString());
@@ -321,7 +324,7 @@ public class JdbcUserRepository implements UserRepository {
         params.addValue("time_from", assignment.getFrom());
         params.addValue("time_to", assignment.getTo());
         params.addValue("note", assignment.getNote());
-        params.addValue("status", assignment.getStatus());
+        params.addValue("status", assignment.getStatus().toString());
 
         var rowsUpdated = jdbcTemplate.update(sql, params);
 

@@ -1,5 +1,7 @@
 package cz.zcu.kiv.pia.sp.projects.domain;
 
+import cz.zcu.kiv.pia.sp.projects.enums.Status;
+
 import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
@@ -24,7 +26,7 @@ public class Assignment {
     /** poznamka */
     private String note;
     /** stav */
-    private String status;
+    private Status status;
 
     /**
      * constructor, vytvori assignment s nahodnym UUID
@@ -36,7 +38,7 @@ public class Assignment {
      * @param note poznamka
      * @param status stav
      */
-    public Assignment(UUID worker_id, UUID job_id, double scope, Instant from, Instant to, String note, String status) {
+    public Assignment(UUID worker_id, UUID job_id, double scope, Instant from, Instant to, String note, Status status) {
         this(UUID.randomUUID(), worker_id, job_id, scope, from, to, note, status);
     }
 
@@ -51,7 +53,7 @@ public class Assignment {
      * @param note poznamka
      * @param status stav
      */
-    public Assignment(UUID id, UUID worker_id, UUID job_id, double scope, Instant from, Instant to, String note, String status) {
+    public Assignment(UUID id, UUID worker_id, UUID job_id, double scope, Instant from, Instant to, String note, Status status) {
         this.id = id;
         this.worker_id = worker_id;
         this.job_id = job_id;
@@ -70,7 +72,7 @@ public class Assignment {
      * @param note poznamka
      * @param status stav
      */
-    public void update(double scope, Instant from, Instant to, String note, String status) {
+    public void update(double scope, Instant from, Instant to, String note, Status status) {
         this.scope = scope;
         this.from = from;
         this.to = to;
@@ -78,75 +80,38 @@ public class Assignment {
         this.status = status;
     }
 
-    /**
-     * vrati id
-     * @return assignment id
-     */
     public UUID getId() {
         return id;
     }
 
-    /**
-     * vrati id uzivatele
-     * @return
-     */
     public UUID getWorker_id() {
         return worker_id;
     }
 
-    /**
-     * vrati id projektu
-     * @return
-     */
     public UUID getJob_id() {
         return job_id;
     }
 
-    /**
-     * vrati uvazek
-     * @return uvazek 0-40 hodin
-     */
     public double getScope() {
         return scope;
     }
 
-    /**
-     * vrati cas od
-     * @return cas od
-     */
     public Instant getFrom() {
         return from;
     }
 
-    /**
-     * vrati cas do
-     * @return cas do
-     */
     public Instant getTo() {
         return to;
     }
 
-    /**
-     * vrati poznamku
-     * @return poznamka
-     */
     public String getNote() {
         return note;
     }
 
-    /**
-     * vrati stav
-     * @return stav
-     */
-    public String getStatus() {
+    public Status getStatus() {
         return status;
     }
 
-    /**
-     * porovnani
-     * @param o objekt ktery chceme porovnat
-     * @return zda se rovnaji
-     */
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -154,19 +119,11 @@ public class Assignment {
         return Objects.equals(worker_id, assignment.worker_id) && Objects.equals(job_id, assignment.job_id);
     }
 
-    /**
-     * hash
-     * @return hash
-     */
     @Override
     public int hashCode() {
         return Objects.hash(worker_id, job_id);
     }
 
-    /**
-     * vypyise hodnoty
-     * @return hodnoty
-     */
     @Override
     public String toString() {
         return "Assignment{" +

@@ -9,12 +9,12 @@
         <div class="row">
             <div class="row">
                 <div class="col-md-10 col-lg-9 col-xl-8">
-                    <h1 th:if="${#strings.contains(#authentication.principal.authorities, 'REGULAR-USER')}">Account overview</h1>
-                    <h1 th:if="${#strings.contains(#authentication.principal.authorities, 'SUPERIOR')}">All subordinates</h1>
-                    <h1 th:if="${#strings.contains(#authentication.principal.authorities, 'PROJECT-MANAGER')}">All users on my projects</h1>
-                    <h1 th:if="${#strings.contains(#authentication.principal.authorities, 'DEPARTMENT-MANAGER')}">All assigned users</h1>
-                    <h1 th:if="${#strings.contains(#authentication.principal.authorities, 'SECRETARIAT')}">All users</h1>
-                    <div th:if="${#strings.contains(#authentication.principal.authorities, 'SECRETARIAT')}">
+                    <h1 th:if="${#strings.contains(#authentication.principal.authorities, T(cz.zcu.kiv.pia.sp.projects.enums.Role).REGULAR_USER.role)}">Account overview</h1>
+                    <h1 th:if="${#strings.contains(#authentication.principal.authorities, T(cz.zcu.kiv.pia.sp.projects.enums.Role).SUPERIOR.role)}">All subordinates</h1>
+                    <h1 th:if="${#strings.contains(#authentication.principal.authorities, T(cz.zcu.kiv.pia.sp.projects.enums.Role).PROJECT_MANAGER.role)}">All users on my projects</h1>
+                    <h1 th:if="${#strings.contains(#authentication.principal.authorities, T(cz.zcu.kiv.pia.sp.projects.enums.Role).DEPARTMENT_MANAGER.role)}">All assigned users</h1>
+                    <h1 th:if="${#strings.contains(#authentication.principal.authorities, T(cz.zcu.kiv.pia.sp.projects.enums.Role).SECRETARIAT.role)}">All users</h1>
+                    <div th:if="${#strings.contains(#authentication.principal.authorities, T(cz.zcu.kiv.pia.sp.projects.enums.Role).SECRETARIAT.role)}">
                         <a class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseForm" aria-expanded="false" aria-controls="collapseForm">Assign Subordinate</a>
                         <div th:switch="${message}">
                             <div th:case="'Success'" class="alert alert-success">
@@ -67,7 +67,7 @@
                         <th>Role</th>
                         <th>Workplace</th>
                         <th>Email</th>
-                        <th th:if="${#strings.contains(#authentication.principal.authorities, 'SECRETARIAT')}">Action</th>
+                        <th th:if="${#strings.contains(#authentication.principal.authorities, T(cz.zcu.kiv.pia.sp.projects.enums.Role).SECRETARIAT.role)}">Action</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -79,14 +79,14 @@
                             <td th:text="${users.role}"></td>
                             <td th:text="${users.workplace}"></td>
                             <td th:text="${users.email}"></td>
-                            <td th:if="${#strings.contains(#authentication.principal.authorities, 'SECRETARIAT')}">
+                            <td th:if="${#strings.contains(#authentication.principal.authorities, T(cz.zcu.kiv.pia.sp.projects.enums.Role).SECRETARIAT.role)}">
                                 <a class="btn btn-success btn-sm" th:href="@{/user/edit-{username}(username=${users.username})}" data-toggle="tooltip" data-placement="top" title="Edit"><i><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
                                     <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
                                     <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z"/></svg></i>
                                 </a>
                             </td>
                         </tr>
-                        <div th:if="${#strings.contains(#authentication.principal.authorities, 'PROJECT-MANAGER') OR #strings.contains(#authentication.principal.authorities, 'DEPARTMENT-MANAGER')}" class="collapse" th:id="'accordionRow_'+${users.username}">
+                        <div th:if="${#strings.contains(#authentication.principal.authorities, T(cz.zcu.kiv.pia.sp.projects.enums.Role).PROJECT_MANAGER.role) OR #strings.contains(#authentication.principal.authorities, T(cz.zcu.kiv.pia.sp.projects.enums.Role).DEPARTMENT_MANAGER.role)}" class="collapse" th:id="'accordionRow_'+${users.username}">
                             <tr class="collapse no-border bg-light" th:id="'accordionRow_'+${users.username}" th:if="${not #lists.isEmpty(users.projects)}">
                                 <th></th>
                                 <th>Active workload</th>
@@ -115,7 +115,7 @@
                                 <td></td>
                             </tr>
                         </div>
-                        <div th:if="not ${#strings.contains(#authentication.principal.authorities, 'PROJECT-MANAGER') OR #strings.contains(#authentication.principal.authorities, 'DEPARTMENT-MANAGER')}" class="collapse" th:id="'accordionRow_'+${users.username}">
+                        <div th:if="not ${#strings.contains(#authentication.principal.authorities, T(cz.zcu.kiv.pia.sp.projects.enums.Role).PROJECT_MANAGER.role) OR #strings.contains(#authentication.principal.authorities, T(cz.zcu.kiv.pia.sp.projects.enums.Role).DEPARTMENT_MANAGER.role)}" class="collapse" th:id="'accordionRow_'+${users.username}">
                             <tr class="collapse no-border bg-light" th:id="'accordionRow_'+${users.username}" th:if="${not #lists.isEmpty(users.projects)}">
                                 <th></th>
                                 <th>Project name</th>

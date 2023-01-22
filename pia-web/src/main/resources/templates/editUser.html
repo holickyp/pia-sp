@@ -4,7 +4,7 @@
   <title>Edit user</title>
 </head>
 <body>
-<section layout:fragment="content" class="my-3" th:if="${#strings.contains(#authentication.principal.authorities, 'SECRETARIAT')}">
+<section layout:fragment="content" class="my-3" th:if="${#strings.contains(#authentication.principal.authorities, T(cz.zcu.kiv.pia.sp.projects.enums.Role).SECRETARIAT.role)}">
   <div class="row justify-content-sm-center">
     <div class="col-sm-7 col-md-6 col-lg-5 col-xl-4">
       <h1 class="h3 mb-4">Edit user information</h1>
@@ -32,11 +32,11 @@
           <input type="password" th:field="*{password}" class="form-control" id="userPassword" required>
           <label for="userRole" class="form-label">Role</label>
           <select th:field="*{role}" class="form-control" id="userRole">
-            <option value="REGULAR-USER">Regular User</option>
-            <option value="SUPERIOR">Superior</option>
-            <option value="PROJECT-MANAGER">Project manager</option>
-            <option value="DEPARTMENT-MANAGER">Department manager</option>
-            <option value="SECRETARIAT">Secretariat</option>
+            <option th:value="${T(cz.zcu.kiv.pia.sp.projects.enums.Role).REGULAR_USER}" th:text="${T(cz.zcu.kiv.pia.sp.projects.enums.Role).REGULAR_USER.role}"></option>
+            <option th:value="${T(cz.zcu.kiv.pia.sp.projects.enums.Role).SUPERIOR}" th:text="${T(cz.zcu.kiv.pia.sp.projects.enums.Role).SUPERIOR.role}"></option>
+            <option th:value="${T(cz.zcu.kiv.pia.sp.projects.enums.Role).PROJECT_MANAGER}" th:text="${T(cz.zcu.kiv.pia.sp.projects.enums.Role).PROJECT_MANAGER.role}"></option>
+            <option th:value="${T(cz.zcu.kiv.pia.sp.projects.enums.Role).DEPARTMENT_MANAGER}" th:text="${T(cz.zcu.kiv.pia.sp.projects.enums.Role).DEPARTMENT_MANAGER.role}"></option>
+            <option th:value="${T(cz.zcu.kiv.pia.sp.projects.enums.Role).SECRETARIAT}" th:text="${T(cz.zcu.kiv.pia.sp.projects.enums.Role).SECRETARIAT.role}"></option>
           </select>
           <label for="userWorkplace" class="form-label">Workplace</label>
           <input type="text" th:field="*{workplace}" class="form-control" id="userWorkplace" required>

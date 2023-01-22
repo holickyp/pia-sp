@@ -3,6 +3,12 @@ package cz.zcu.kiv.pia.sp.projects.ui.controller;
 import cz.zcu.kiv.pia.sp.projects.domain.Assignment;
 import cz.zcu.kiv.pia.sp.projects.domain.Project;
 import cz.zcu.kiv.pia.sp.projects.domain.User;
+import cz.zcu.kiv.pia.sp.projects.enums.MinDates;
+import cz.zcu.kiv.pia.sp.projects.enums.Status;
+import cz.zcu.kiv.pia.sp.projects.error.InvalidDateException;
+import cz.zcu.kiv.pia.sp.projects.error.UserAlreadyAssignedException;
+import cz.zcu.kiv.pia.sp.projects.error.UserNotFoundException;
+import cz.zcu.kiv.pia.sp.projects.error.WorkloadExceededException;
 import cz.zcu.kiv.pia.sp.projects.service.AssignmentService;
 import cz.zcu.kiv.pia.sp.projects.service.ProjectService;
 import cz.zcu.kiv.pia.sp.projects.service.UserService;
@@ -20,7 +26,6 @@ import reactor.core.publisher.Mono;
 
 import java.text.SimpleDateFormat;
 import java.time.Instant;
-import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
@@ -36,9 +41,6 @@ public class ViewProjectController extends AbstractController {
     // Autowire ProjectService using constructor-based dependency injection
     private final ProjectService projectService;
     private final AssignmentService assignmentService;
-    private UUID currentProject_id;
-
-    private UUID currentAssignment_id;
     private static final DateTimeFormatter FMT = new DateTimeFormatterBuilder()
             .appendPattern("yyyy-MM-dd")
             .parseDefaulting(ChronoField.NANO_OF_DAY, 0)
@@ -52,36 +54,6 @@ public class ViewProjectController extends AbstractController {
     }
 
     /**
-     * @return id aktualne prohlizeneho projektu
-     */
-    private UUID getCurrentProjectID() {
-        return currentProject_id;
-    }
-
-    /**
-     * nastavi id aktualne prohlizeneho projektu
-     * @param project_id id aktualne prohlizeneho projektu
-     */
-    private void setCurrentProject(UUID project_id) {
-        this.currentProject_id = project_id;
-    }
-
-    /**
-     * @return id aktualne prohlizeneho assignmentu
-     */
-    private UUID getCurrentAssignmentID() {
-        return currentAssignment_id;
-    }
-
-    /**
-     * nastavi id aktualne prohlizeneho assignmentu
-     * @param assignment_id id aktualne prohlizeneho assignmentu
-     */
-    private void setCurrentAssignment(UUID assignment_id) {
-        this.currentAssignment_id = assignment_id;
-    }
-
-    /**
      * stranka pro prohlizeni projektu
      * @param projectId id projektu
      * @param model model
@@ -90,7 +62,6 @@ public class ViewProjectController extends AbstractController {
     @GetMapping("/project/{projectId}")
     public String viewProject(@PathVariable UUID projectId, Model model) {
         var project = projectService.getProject(projectId);
-        setCurrentProject(projectId);
         // Mono will be resolved before rendering.
         model.addAttribute("project", project);
 
@@ -113,31 +84,31 @@ public class ViewProjectController extends AbstractController {
      * @param model model
      * @return template name
      */
-    @PostMapping("/project/assign")
-    public Mono<String> assignUser(@ModelAttribute UserVO userVO, BindingResult errors, Model model) {
+    @PostMapping("/project/{projectId}-assign")
+    public Mono<String> assignUser(@PathVariable UUID projectId, @ModelAttribute UserVO userVO, BindingResult errors, Model model) {
         //indetifikuje uzivatele ktereho chceme priradit
-        User join_user = userService.findUserByUsername(userVO.getUsername()).block();
-        if(join_user == null) {
+        User join_user;
+        try {
+            join_user = userService.findUserByUsername(userVO.getUsername()).block();
+            assignmentService.isUserAssigned(join_user.getId(), projectId);
+        }
+        catch(UserNotFoundException e) {
             errors.rejectValue("username", "user.username","User not found.");
             model.addAttribute("registrationForm", userVO);
             model.addAttribute("message", "Failed-notFound");
             model.addAttribute("alertClass", "alert-danger");
-            return Mono.just(viewProject(getCurrentProjectID(), model));
+            return Mono.just(viewProject(projectId, model));
         }
-
-        var assignments = assignmentService.findByUserId(join_user.getId());
-        for(Assignment assignment : assignments.toIterable()) {
-            if(assignment.getJob_id().equals(getCurrentProjectID())) {
-                errors.rejectValue("username", "user.username","User already assigned.");
-                model.addAttribute("registrationForm", userVO);
-                model.addAttribute("message", "Failed-exists");
-                model.addAttribute("alertClass", "alert-danger");
-                return Mono.just(viewProject(getCurrentProjectID(), model));
-            }
+        catch(UserAlreadyAssignedException e) {
+            errors.rejectValue("username", "user.username","User already assigned.");
+            model.addAttribute("registrationForm", userVO);
+            model.addAttribute("message", "Failed-exists");
+            model.addAttribute("alertClass", "alert-danger");
+            return Mono.just(viewProject(projectId, model));
         }
 
         return userService.getCurrentUser()
-                .flatMap(user -> assignmentService.createAssignment(new Assignment(join_user.getId(), getCurrentProjectID(), 0, FMT.parse("1000-01-01", Instant::from), FMT.parse("1000-01-01", Instant::from), "newly assigned", "Draft")))
+                .flatMap(user -> assignmentService.createAssignment(new Assignment(join_user.getId(), projectId, 0, FMT.parse(MinDates.DEFAULT_DATE.toString(), Instant::from), FMT.parse(MinDates.DEFAULT_DATE.toString(), Instant::from), "newly assigned", Status.DRAFT)))
                 .map(project -> "redirect:/project/" + project.getJob_id()); // Redirect to project view
     }
 
@@ -150,7 +121,6 @@ public class ViewProjectController extends AbstractController {
     @GetMapping("/project/edit-{projectId}")
     public String editProject(@PathVariable UUID projectId, Model model) {
         Project project = projectService.getProject(projectId).block();
-        setCurrentProject(projectId);
         // Mono will be resolved before rendering.
         model.addAttribute("project", project);
 
@@ -175,10 +145,10 @@ public class ViewProjectController extends AbstractController {
      * @param model model
      * @return template name
      */
-    @PostMapping("/project/edit")
-    public Mono<String> editProject(@ModelAttribute ProjectVO projectVO, BindingResult errors, Model model) {
+    @PostMapping("/project/edit-{projectId}")
+    public Mono<String> editProject(@PathVariable UUID projectId, @ModelAttribute ProjectVO projectVO, BindingResult errors, Model model) {
         return userService.getCurrentUser()
-                .flatMap(user -> projectService.updateProject(getCurrentProjectID(), projectVO.getName(), FMT.parse(projectVO.getFrom(), Instant::from), FMT.parse(projectVO.getTo(), Instant::from), projectVO.getDescription()))
+                .flatMap(user -> projectService.updateProject(projectId, projectVO.getName(), FMT.parse(projectVO.getFrom(), Instant::from), FMT.parse(projectVO.getTo(), Instant::from), projectVO.getDescription()))
                 .map(project -> "redirect:/project/" + project.getId()); // Redirect to project view
     }
 
@@ -192,7 +162,6 @@ public class ViewProjectController extends AbstractController {
     public String editAssignment(@PathVariable UUID assignmentId, Model model) {
         Assignment assignment = assignmentService.findById(assignmentId).block();
         model.addAttribute("assignment", assignment);
-        setCurrentAssignment(assignmentId);
 
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
         Date fromDate = Date.from(assignment.getFrom());
@@ -201,10 +170,10 @@ public class ViewProjectController extends AbstractController {
         String formattedToDate = formatter.format(toDate);
 
         //predvyplni formular
-        if(formattedFromDate.equals("0999-12-27") || formattedToDate.equals("0999-12-27")) {
-            model.addAttribute("assignmentVO", new AssignmentVO(assignment.getWorker_id(), assignment.getJob_id(), assignment.getScope(), "", "", assignment.getNote(), assignment.getStatus()));
+        if(formattedFromDate.equals(MinDates.MIN_DATE.toString()) || formattedToDate.equals(MinDates.MIN_DATE.toString())) {
+            model.addAttribute("assignmentVO", new AssignmentVO(assignment.getWorker_id(), assignment.getJob_id(), assignment.getScope(), "", "", assignment.getNote(), assignment.getStatus().toString()));
         } else {
-            model.addAttribute("assignmentVO", new AssignmentVO(assignment.getWorker_id(), assignment.getJob_id(), assignment.getScope(), formattedFromDate, formattedToDate, assignment.getNote(), assignment.getStatus()));
+            model.addAttribute("assignmentVO", new AssignmentVO(assignment.getWorker_id(), assignment.getJob_id(), assignment.getScope(), formattedFromDate, formattedToDate, assignment.getNote(), assignment.getStatus().toString()));
         }
 
         return "editAssignment";
@@ -217,43 +186,33 @@ public class ViewProjectController extends AbstractController {
      * @param model model
      * @return template name
      */
-    @PostMapping("/assignment/edit")
-    public Mono<String> editAssignment(@ModelAttribute AssignmentVO assignmentVO, BindingResult errors, Model model) {
-        UUID target_user_id = assignmentService.findById(getCurrentAssignmentID()).block().getWorker_id();
-        var assignments = assignmentService.findByUserId(target_user_id);
-        //spocte uvazek
-        double workload = 0;
-        for(Assignment assignment : assignments.toIterable()) {
-            if(assignment.getId().equals(getCurrentAssignmentID())) {
-                continue;
-            }
-            workload += assignment.getScope();
-        }
-        workload += assignmentVO.getScope();
-        //test zda uvazek neprekroci maximum
-        if(workload > 40) {
+    @PostMapping("/assignment/edit-{assignmentId}")
+    public Mono<String> editAssignment(@PathVariable UUID assignmentId, @ModelAttribute AssignmentVO assignmentVO, BindingResult errors, Model model) {
+        Assignment curr_assignment = assignmentService.findById(assignmentId).block();
+        try {
+            assignmentService.isWorkloadExceeded(curr_assignment.getWorker_id(), assignmentId, assignmentVO.getScope());
+        } catch(WorkloadExceededException e) {
             errors.rejectValue("scope", "assignment.scope","Workload exceeds 40 hours.");
             model.addAttribute("editAssignmentForm", assignmentVO);
             model.addAttribute("message", "Failed-workload");
             model.addAttribute("alertClass", "alert-danger");
-            return Mono.just(editAssignment(getCurrentAssignmentID(), model));
+            return Mono.just(editAssignment(assignmentId, model));
         }
+
         //test zda byl datum spravne zadany
-        Instant from = FMT.parse(assignmentVO.getTime_from(), Instant::from);
-        Instant to = FMT.parse(assignmentVO.getTime_to(), Instant::from);
-        LocalDate time_from = from.atZone(ZoneId.systemDefault()).toLocalDate();
-        LocalDate time_to = to.atZone(ZoneId.systemDefault()).toLocalDate();
-        if(time_from.isAfter(time_to)) {
+        try {
+            projectService.isDateValid(assignmentVO.getTime_from(), assignmentVO.getTime_to());
+        } catch(InvalidDateException e) {
             errors.rejectValue("time_to", "assignment.time_to","Invalid dates. Target date must be higher than starting date.");
             model.addAttribute("editAssignmentForm", assignmentVO);
             model.addAttribute("message", "Failed-date");
             model.addAttribute("alertClass", "alert-danger");
-            return Mono.just(editAssignment(getCurrentAssignmentID(), model));
+            return Mono.just(editAssignment(assignmentId, model));
         }
 
         //upravi assignment
         return userService.getCurrentUser()
-                .flatMap(user -> assignmentService.updateAssignment(getCurrentAssignmentID(), assignmentVO.getScope(), from, to, assignmentVO.getNote(), assignmentVO.getStatus()))
-                .map(project -> "redirect:/project/" + getCurrentProjectID()); // Redirect to project view
+                .flatMap(user -> assignmentService.updateAssignment(assignmentId, assignmentVO.getScope(), FMT.parse(assignmentVO.getTime_from(), Instant::from), FMT.parse(assignmentVO.getTime_to(), Instant::from), assignmentVO.getNote(), assignmentVO.getStatus()))
+                .map(project -> "redirect:/project/" + curr_assignment.getJob_id()); // Redirect to project view
     }
 }

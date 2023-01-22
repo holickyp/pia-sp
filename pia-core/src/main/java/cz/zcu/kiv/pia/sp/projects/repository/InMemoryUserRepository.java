@@ -3,6 +3,7 @@ package cz.zcu.kiv.pia.sp.projects.repository;
 import cz.zcu.kiv.pia.sp.projects.domain.Project;
 import cz.zcu.kiv.pia.sp.projects.domain.Subordinate;
 import cz.zcu.kiv.pia.sp.projects.domain.User;
+import cz.zcu.kiv.pia.sp.projects.enums.Role;
 import cz.zcu.kiv.pia.sp.projects.service.ProjectService;
 import cz.zcu.kiv.pia.sp.projects.service.UserService;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -67,7 +68,7 @@ public class InMemoryUserRepository implements UserRepository {
      * @return aktualizovany uzivatel
      */
     @Override
-    public Mono<User> updateUser(UUID id, String firstName, String lastName, String username, String password, String role, String workplace, String email) {
+    public Mono<User> updateUser(UUID id, String firstName, String lastName, String username, String password, Role role, String workplace, String email) {
         var updated_user = usersMap.get(id);
         updated_user.update(firstName, lastName, username, password, role, workplace, email);
         return Mono.just(updated_user);

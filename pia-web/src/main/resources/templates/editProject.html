@@ -4,12 +4,12 @@
   <title>Edit project</title>
 </head>
 <body>
-<section layout:fragment="content" class="my-3" th:if="${#strings.contains(#authentication.principal.authorities, 'SECRETARIAT') OR #strings.contains(#authentication.principal.authorities, 'DEPARTMENT-MANAGER') OR #strings.contains(#authentication.principal.authorities, 'PROJECT-MANAGER')}">
+<section layout:fragment="content" class="my-3" th:if="${#strings.contains(#authentication.principal.authorities, T(cz.zcu.kiv.pia.sp.projects.enums.Role).SECRETARIAT.role) OR #strings.contains(#authentication.principal.authorities, T(cz.zcu.kiv.pia.sp.projects.enums.Role).DEPARTMENT_MANAGER.role) OR #strings.contains(#authentication.principal.authorities, T(cz.zcu.kiv.pia.sp.projects.enums.Role).PROJECT_MANAGER.role)}">
   <div class="row justify-content-sm-center">
     <div class="col-sm-7 col-md-6 col-lg-5 col-xl-4">
       <h1 class="h3 mb-4" th:text="'Edit ' + ${project.name}"></h1>
 
-      <form method="post" th:action="@{/project/edit}" th:object="${projectVO}">
+      <form method="post" th:action="@{/project/edit-{id}(id = ${project.id})}" th:object="${projectVO}">
         <div class="mb-3">
           <label for="projectName" class="form-label">Project name</label>
           <input type="text" th:field="*{name}" class="form-control" id="projectName" required autofocus>

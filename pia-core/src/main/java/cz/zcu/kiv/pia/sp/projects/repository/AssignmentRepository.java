@@ -1,6 +1,7 @@
 package cz.zcu.kiv.pia.sp.projects.repository;
 
 import cz.zcu.kiv.pia.sp.projects.domain.Assignment;
+import cz.zcu.kiv.pia.sp.projects.enums.Status;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -29,7 +30,7 @@ public interface AssignmentRepository {
      * @param status stav
      * @return aktualizovany Assignment
      */
-    Mono<Assignment> updateAssignment(UUID id, double scope, Instant from, Instant to, String note, String status);
+    Mono<Assignment> updateAssignment(UUID id, double scope, Instant from, Instant to, String note, Status status);
 
     /**
      * projede vsechny assignments a aktualizuje jejich stav na Past pokud cas do uz probehl

@@ -1,6 +1,7 @@
 package cz.zcu.kiv.pia.sp.projects.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import cz.zcu.kiv.pia.sp.projects.enums.Role;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -21,7 +22,7 @@ public class User implements UserDetails {
     /** heslo */
     private String password;
     /** role uzivatele */
-    private String role;
+    private Role role;
     /** misto pracoviste */
     private String workplace;
     /** email */
@@ -39,7 +40,7 @@ public class User implements UserDetails {
      * @param workplace misto pracoviste
      * @param email email
      */
-    public User(String firstname, String lastname, String username, String password, String role, String workplace, String email) {
+    public User(String firstname, String lastname, String username, String password, Role role, String workplace, String email) {
         this(UUID.randomUUID(), firstname, lastname, username, password, role, workplace, email);
     }
 
@@ -54,7 +55,7 @@ public class User implements UserDetails {
      * @param workplace misto pracoviste
      * @param email email
      */
-    public User(UUID id, String firstname, String lastname, String username, String password, String role, String workplace, String email) {
+    public User(UUID id, String firstname, String lastname, String username, String password, Role role, String workplace, String email) {
         this.id = id;
         this.firstname = firstname;
         this.lastname = lastname;
@@ -76,7 +77,7 @@ public class User implements UserDetails {
      * @param workplace misto pracoviste
      * @param email email
      */
-    public void update(String firstname, String lastname, String username, String password, String role, String workplace, String email) {
+    public void update(String firstname, String lastname, String username, String password, Role role, String workplace, String email) {
         this.firstname = firstname;
         this.lastname = lastname;
         this.username = username;
@@ -116,7 +117,7 @@ public class User implements UserDetails {
         return password;
     }
 
-    public String getRole() {
+    public Role getRole() {
         return role;
     }
 
@@ -134,7 +135,7 @@ public class User implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Set.of(new SimpleGrantedAuthority(role));
+        return Set.of(new SimpleGrantedAuthority(role.toString()));
     }
 
     @Override

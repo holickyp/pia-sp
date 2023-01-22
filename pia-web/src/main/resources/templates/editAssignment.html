@@ -4,12 +4,12 @@
     <title>Edit Assignment</title>
 </head>
 <body>
-<section layout:fragment="content" class="my-3" th:if="${#strings.contains(#authentication.principal.authorities, 'DEPARTMENT-MANAGER') OR #strings.contains(#authentication.principal.authorities, 'PROJECT-MANAGER')}">
+<section layout:fragment="content" class="my-3" th:if="${#strings.contains(#authentication.principal.authorities, T(cz.zcu.kiv.pia.sp.projects.enums.Role).DEPARTMENT_MANAGER.role) OR #strings.contains(#authentication.principal.authorities, T(cz.zcu.kiv.pia.sp.projects.enums.Role).PROJECT_MANAGER.role)}">
     <div class="row justify-content-sm-center">
         <div class="col-sm-7 col-md-6 col-lg-5 col-xl-4">
             <h1 class="h3 mb-4">Edit Assignment</h1>
 
-            <form method="post" th:action="@{/assignment/edit}" th:object="${assignmentVO}">
+            <form method="post" th:action="@{/assignment/edit-{id}(id = ${assignment.id})}" th:object="${assignmentVO}">
                 <div th:switch="${message}">
                     <div th:case="'Success'" class="alert alert-success">
                         <strong>Success!</strong> Operation performed successfully.
@@ -32,10 +32,10 @@
                     <input type="text" th:field="*{note}" class="form-control" id="assignmentNote" required>
                     <label for="assignmentStatus" class="form-label">Assignment status</label>
                     <select th:field="*{status}" class="form-control" id="assignmentStatus">
-                        <option value="Draft" th:if="${assignment.status == 'Draft'}">Draft</option>
-                        <option value="Canceled">Canceled</option>
-                        <option value="Past" th:if="${assignment.status == 'Past'}">Past</option>
-                        <option value="Active">Active</option>
+                        <option th:value="${T(cz.zcu.kiv.pia.sp.projects.enums.Status).DRAFT}" th:if="${assignment.status == T(cz.zcu.kiv.pia.sp.projects.enums.Status).DRAFT}" th:text="${T(cz.zcu.kiv.pia.sp.projects.enums.Status).DRAFT}"></option>
+                        <option th:value="${T(cz.zcu.kiv.pia.sp.projects.enums.Status).CANCELED}" th:text="${T(cz.zcu.kiv.pia.sp.projects.enums.Status).CANCELED}"></option>
+                        <option th:value="${T(cz.zcu.kiv.pia.sp.projects.enums.Status).PAST}" th:if="${assignment.status == T(cz.zcu.kiv.pia.sp.projects.enums.Status).PAST}" th:text="${T(cz.zcu.kiv.pia.sp.projects.enums.Status).PAST}"></option>
+                        <option th:value="${T(cz.zcu.kiv.pia.sp.projects.enums.Status).ACTIVE}" th:text="${T(cz.zcu.kiv.pia.sp.projects.enums.Status).ACTIVE}"></option>
                     </select>
                 </div>
                 <button type="submit" class="btn btn-primary">Update</button>

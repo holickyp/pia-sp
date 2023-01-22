@@ -1,6 +1,7 @@
 package cz.zcu.kiv.pia.sp.projects.repository;
 
 import cz.zcu.kiv.pia.sp.projects.domain.Assignment;
+import cz.zcu.kiv.pia.sp.projects.enums.Status;
 import cz.zcu.kiv.pia.sp.projects.service.AssignmentService;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
@@ -57,7 +58,7 @@ public class InMemoryAssignmentRepository implements AssignmentRepository {
      * @return aktualizovany Assignment
      */
     @Override
-    public Mono<Assignment> updateAssignment(UUID id, double scope, Instant from, Instant to, String note, String status) {
+    public Mono<Assignment> updateAssignment(UUID id, double scope, Instant from, Instant to, String note, Status status) {
         var updated_assignment = assignmentMap.get(id);
         updated_assignment.update(scope, from, to, note, status);
         return Mono.just(updated_assignment);
@@ -75,7 +76,7 @@ public class InMemoryAssignmentRepository implements AssignmentRepository {
         for(Assignment assignment : assignments.toIterable()) {
             LocalDate time_to = assignment.getTo().atZone(ZoneId.systemDefault()).toLocalDate();
             if(localDate.isAfter(time_to)) {
-                assignment.update(assignment.getScope(), assignment.getFrom(), assignment.getTo(), assignment.getNote(), "Past");
+                assignment.update(assignment.getScope(), assignment.getFrom(), assignment.getTo(), assignment.getNote(), Status.PAST);
             }
         }
         return Mono.empty();
