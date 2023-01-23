@@ -1,5 +1,9 @@
 package cz.zcu.kiv.pia.sp.projects.enums;
 
+/**
+ * Mozne role uzivatelu
+ * dovolene akce roli -> viz dokumentace
+ */
 public enum Role {
     SECRETARIAT("SECRETARIAT"),
     DEPARTMENT_MANAGER("DEPARTMENT-MANAGER"),

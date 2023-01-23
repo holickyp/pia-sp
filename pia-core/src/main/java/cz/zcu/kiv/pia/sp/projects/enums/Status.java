@@ -1,5 +1,8 @@
 package cz.zcu.kiv.pia.sp.projects.enums;
 
+/**
+ * mozne stavy prirazeni uzivatelu v projektech
+ */
 public enum Status {
     DRAFT("Draft"),
     CANCELED("Canceled"),

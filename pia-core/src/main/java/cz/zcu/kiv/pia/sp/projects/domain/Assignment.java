@@ -19,9 +19,9 @@ public class Assignment {
     private final UUID job_id;
     /** uvazek 0-40 hodin */
     private double scope;
-    /** cas od */
+    /** cas platnosti prirazeni od */
     private Instant from;
-    /** cas do */
+    /** cas platnosti prirazeni do */
     private Instant to;
     /** poznamka */
     private String note;

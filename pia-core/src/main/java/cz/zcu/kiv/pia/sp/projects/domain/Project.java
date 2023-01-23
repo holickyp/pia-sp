@@ -13,9 +13,9 @@ public class Project {
     private String name;
     /** manazer projektu */
     private final User manager;
-    /** cas od */
+    /** cas platnosi prokektu od */
     private Instant from;
-    /** cas do */
+    /** cas platnosi prokektu do */
     private Instant to;
     /** popis projektu */
     private String description;
